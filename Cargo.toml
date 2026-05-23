@@ -10,8 +10,8 @@ members = [
     "node",
     "pallets/template",
     "runtime/v1",
+    "primitives/pq-crypto",
     # Future members (uncomment when created):
-    # "primitives/pq-crypto",
     # "pallets/pq-registry",
     # "pallets/pq-wallet",
     # "runtime/v2",
@@ -87,6 +87,8 @@ sp-block-builder = { version = "40.0.0", default-features = false }
 sp-blockchain = { version = "43.0.0", default-features = false }
 sp-consensus-aura = { version = "0.46.0", default-features = false }
 sp-core = { version = "39.0.0", default-features = false }
+sp-runtime-interface = { version = "33.0.0", default-features = false }
+sp-std = { version = "14.0.0", default-features = false }
 sp-genesis-builder = { version = "0.21.0", default-features = false }
 sp-inherents = { version = "40.0.0", default-features = false }
 sp-io = { version = "44.0.0", default-features = false }
