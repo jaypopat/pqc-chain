@@ -135,3 +135,62 @@ fn cli_produced_signature_verifies_with_pq_crypto() {
     let msg = hex::decode(v["msg_hex"].as_str().unwrap()).unwrap();
     assert!(pq_crypto::pq_crypto::verify(&pk, &sig, &msg));
 }
+
+/// The on-chain pallet hashes a specific byte layout; the CLI must produce
+/// the *same bytes*, byte-for-byte, or the pallet rejects the signature
+/// (`BadProof` at ValidateUnsigned). This test reconstructs the pallet's
+/// `encode_transfer_msg` layout independently and asserts equality with what
+/// `sign-cli sign-transfer` writes to `msg_hex`.
+#[test]
+fn cli_msg_layout_matches_pallet_encode_transfer_msg() {
+    use codec::Encode;
+    use sp_core::crypto::AccountId32;
+
+    let dir = tempdir().unwrap();
+    let key_path = dir.path().join("a.json");
+    let tx_path = dir.path().join("tx.json");
+    Command::cargo_bin("sign-cli")
+        .unwrap()
+        .args(["keygen", "--out", key_path.to_str().unwrap()])
+        .assert()
+        .success();
+
+    let from_hex = "d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+    let to_hex = "8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48";
+    let amount: u128 = 1_000_000_000_000;
+    let nonce: u64 = 0;
+    let chain_id: u32 = 42;
+    let spec_version: u32 = 200;
+
+    Command::cargo_bin("sign-cli")
+        .unwrap()
+        .args([
+            "sign-transfer",
+            "--sk", key_path.to_str().unwrap(),
+            "--from", from_hex,
+            "--to", to_hex,
+            "--amount", &amount.to_string(),
+            "--nonce", &nonce.to_string(),
+            "--chain-id", &chain_id.to_string(),
+            "--spec-version", &spec_version.to_string(),
+            "--out", tx_path.to_str().unwrap(),
+        ])
+        .assert()
+        .success();
+
+    // Reconstruct the pallet's encode_transfer_msg layout:
+    //   raw TRANSFER_DOMAIN bytes || SCALE_encode((chain_id, spec_version, from, to, amount, nonce))
+    let from = AccountId32::from(<[u8; 32]>::try_from(hex::decode(from_hex).unwrap()).unwrap());
+    let to = AccountId32::from(<[u8; 32]>::try_from(hex::decode(to_hex).unwrap()).unwrap());
+    let mut expected = b"QL_PQ_TRANSFER_V1".to_vec();
+    (chain_id, spec_version, &from, &to, amount, nonce).encode_to(&mut expected);
+
+    let v: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&tx_path).unwrap()).unwrap();
+    let actual = hex::decode(v["msg_hex"].as_str().unwrap()).unwrap();
+
+    assert_eq!(
+        actual, expected,
+        "sign-cli msg layout drifted from pallet-pq-wallet::encode_transfer_msg",
+    );
+}

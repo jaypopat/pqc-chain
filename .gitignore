@@ -17,3 +17,4 @@
 # Chain spec
 chain-spec.json
 .demo/
+scripts/e2e/node_modules/

@@ -132,8 +132,14 @@ fn cmd_sign_transfer(
     let from = sp_core::crypto::AccountId32::from(from_bytes);
     let to = sp_core::crypto::AccountId32::from(to_bytes);
 
+    // Mirror pallet-pq-wallet::encode_transfer_msg: raw domain bytes (NOT
+    // SCALE-length-prefixed) followed by SCALE-encoded tuple. SCALE-encoding a
+    // `&[u8]` inside a tuple would prepend a compact length byte and skew the
+    // payload by one byte vs. what the pallet hashes.
     let domain: &[u8] = b"QL_PQ_TRANSFER_V1";
-    let payload = (domain, chain_id, spec_version, &from, &to, amount, nonce).encode();
+    let mut payload = Vec::with_capacity(domain.len() + 96);
+    payload.extend_from_slice(domain);
+    (chain_id, spec_version, &from, &to, amount, nonce).encode_to(&mut payload);
     let sig = sk
         .try_sign(&payload, &[])
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
