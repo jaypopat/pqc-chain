@@ -9,7 +9,7 @@ const TABS: { id: Tab, label: string, num?: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'commit', label: 'Commit', num: '01' },
   { id: 'upgrade', label: 'Upgrade', num: '02' },
-  { id: 'pq-send', label: 'Leap', num: '03' },
+  { id: 'pq-send', label: 'Transfer', num: '03' },
 ]
 
 export default function Nav({ tab, setTab }: NavProps) {

@@ -15,8 +15,8 @@ export default function App() {
       <Header tab={tab} setTab={setTab} />
       <main className="flex-1">
         {tab === 'home' && <Home goto={setTab} />}
-        {tab === 'commit' && <Commit />}
-        {tab === 'upgrade' && <Upgrade />}
+        {tab === 'commit' && <Commit goto={setTab} />}
+        {tab === 'upgrade' && <Upgrade goto={setTab} />}
         {tab === 'pq-send' && <PqSend />}
       </main>
       <Footer />

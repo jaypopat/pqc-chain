@@ -24,8 +24,8 @@ const STAGES: { num: '01' | '02' | '03', tab: Tab, title: string, kicker: string
     num: '03',
     tab: 'pq-send',
     kicker: 'Lazy reveal',
-    title: 'Leap',
-    body: 'Sign a transfer with your ML-DSA-44 secret key locally and submit it unsigned. The chain reveals your pubkey on first spend, verifies the signature, and moves the funds.',
+    title: 'Transfer',
+    body: 'Send native tokens, signed with your ML-DSA-44 secret key in the browser and submitted unsigned. On first spend, the chain reveals your pubkey, verifies the signature, and moves the balance.',
   },
 ]
 

@@ -1,4 +1,5 @@
 import type { Subscription } from 'rxjs'
+import type { Tab } from '../components/Nav'
 import type { StepState } from '../components/StatusTracker'
 import { Binary } from 'polkadot-api'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -29,7 +30,7 @@ interface SubmitResult {
   recommit: boolean
 }
 
-export default function Commit() {
+export default function Commit({ goto }: { goto: (t: Tab) => void }) {
   const { api } = useChain()
   const { selectedAccount } = useConnect()
   const { keypair, save } = usePqKeypair()
@@ -335,10 +336,14 @@ export default function Commit() {
                   </div>
                   <HexField label="Block hash" value={submitResult.blockHash} byteLen={32} />
                   <HexField label="Event hash" value={submitResult.eventHash} byteLen={32} full />
-                  <div className="inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet">
+                  <button
+                    type="button"
+                    onClick={() => goto('upgrade')}
+                    className="group inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet hover:text-ink transition-colors focus:outline-none"
+                  >
                     Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Upgrade</span>
-                    <span className="icon-[mdi--arrow-right] text-base" />
-                  </div>
+                    <span className="icon-[mdi--arrow-right] text-base transition-transform group-hover:translate-x-1" />
+                  </button>
                 </div>
               )}
             </Card>

@@ -22,6 +22,17 @@ const accountCodec = AccountId(SS58_PREFIX)
 const DEFAULT_AMOUNT = '1000000000000'
 const DEFAULT_NONCE = '0'
 
+const ALICE_HEX = toHex(aliceAddress).toLowerCase()
+const BOB_HEX = toHex(bobAddress).toLowerCase()
+
+function labelForBytes(bytes: Uint8Array | null): string {
+  if (!bytes) return '—'
+  const h = toHex(bytes).toLowerCase()
+  if (h === ALICE_HEX) return 'Alice'
+  if (h === BOB_HEX) return 'Bob'
+  return shortHex(h, 6, 6)
+}
+
 function isHex32(s: string): boolean {
   const h = s.startsWith('0x') ? s.slice(2) : s
   return /^[0-9a-fA-F]{64}$/.test(h)
@@ -89,6 +100,18 @@ export default function PqSend() {
       .catch(() => { if (!cancelled) setCommitmentOk(null) })
     return () => { cancelled = true }
   }, [api, fromBytes])
+
+  // Auto-fill the next expected nonce from PqWallet storage whenever `from` changes
+  // or after a successful submission. The runtime requires nonce == expected.
+  useEffect(() => {
+    let cancelled = false
+    if (!fromBytes) return
+    const ss58 = ss58FromBytes(fromBytes)
+    api.query.PqWallet.Nonce.getValue(ss58)
+      .then((n) => { if (!cancelled) setNonceStr(String(n ?? 0n)) })
+      .catch(() => { /* leave as-is */ })
+    return () => { cancelled = true }
+  }, [api, fromBytes, success])
 
   const formValid = fromBytes && toBytes && amount != null && nonce != null && amount > 0n && nonce >= 0n
   const canSubmit = !!keypair && !!formValid && commitmentOk === true && !!version && !busy
@@ -189,7 +212,7 @@ export default function PqSend() {
   if (!keypair) {
     return (
       <StageLayout>
-        <StageHeader num="03" kicker="Lazy reveal" title="Leap" blurb="Sign a transfer with your ML-DSA-44 secret key in the browser, then submit it as an unsigned extrinsic." />
+        <StageHeader num="03" kicker="Lazy reveal · balance transfer" title="Transfer" blurb="A post-quantum-signed native-token transfer. Signed locally with ML-DSA-44, submitted unsigned." />
         <div className="bg-amber-wash/60 border border-amber-ink/25 px-4 py-3 text-amber-ink text-[13px] flex items-start gap-2">
           <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
           <div>
@@ -206,9 +229,9 @@ export default function PqSend() {
     <StageLayout>
       <StageHeader
         num="03"
-        kicker="Lazy reveal"
-        title="Leap"
-        blurb="Sign a transfer payload with your ML-DSA-44 secret key in the browser, then submit it as an unsigned extrinsic. The chain reveals your pubkey on first spend and applies the balance transfer atomically."
+        kicker="Lazy reveal · balance transfer"
+        title="Transfer"
+        blurb="A post-quantum-signed native-token transfer. Sign the payload with your ML-DSA-44 secret key in the browser and submit it as an unsigned extrinsic. The chain reveals your pubkey on first spend and applies the balance transfer atomically."
       />
 
       {commitmentOk === false && (
@@ -227,8 +250,28 @@ export default function PqSend() {
       <div className="space-y-5">
         <Card label="Transfer details" tag="PqWallet.pq_transfer">
           <div className="space-y-4">
-            <Field label="from · 32-byte AccountId, hex" value={fromHexStr} onChange={setFromHexStr} invalid={fromHexStr.length > 0 && !fromBytes} />
-            <Field label="to · 32-byte AccountId, hex" value={toHexStr} onChange={setToHexStr} invalid={toHexStr.length > 0 && !toBytes} />
+            <Field
+              label="from · 32-byte AccountId, hex"
+              value={fromHexStr}
+              onChange={setFromHexStr}
+              invalid={fromHexStr.length > 0 && !fromBytes}
+              badge={fromBytes ? labelForBytes(fromBytes) : undefined}
+              quickPicks={[
+                { label: 'Alice', value: toHex(aliceAddress) },
+                { label: 'Bob', value: toHex(bobAddress) },
+              ]}
+            />
+            <Field
+              label="to · 32-byte AccountId, hex"
+              value={toHexStr}
+              onChange={setToHexStr}
+              invalid={toHexStr.length > 0 && !toBytes}
+              badge={toBytes ? labelForBytes(toBytes) : undefined}
+              quickPicks={[
+                { label: 'Alice', value: toHex(aliceAddress) },
+                { label: 'Bob', value: toHex(bobAddress) },
+              ]}
+            />
             <div className="grid grid-cols-2 gap-4">
               <Field
                 label="amount · plancks, u128"
@@ -242,7 +285,7 @@ export default function PqSend() {
                 value={nonceStr}
                 onChange={setNonceStr}
                 invalid={nonceStr.length > 0 && nonce == null}
-                footer="first PQ tx is nonce 0; bump for each."
+                footer="auto-filled from chain · bumps after each transfer"
               />
             </div>
           </div>
@@ -324,17 +367,35 @@ export default function PqSend() {
           <div className="relative bg-violet/[0.06] border border-violet/30 px-7 py-6 overflow-hidden">
             <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-violet/15 blur-3xl pointer-events-none" />
             <div className="relative">
-              <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet mb-2">first lazy reveal</div>
+              <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet mb-2">first lazy reveal · balance transfer</div>
               <h3 className="text-[24px] tracking-[-0.02em] font-semibold text-ink leading-tight">
-                Quantum-safe transfer{' '}
-                <span className="italic-display violet-highlight">included.</span>
+                {planckToUnit(amount ?? 0n)} UNIT{' '}
+                <span className="italic-display violet-highlight">transferred.</span>
               </h3>
+
+              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
+                <div className="surface-strong px-4 py-3">
+                  <div className="label-tag mb-1">From</div>
+                  <div className="text-[14px] font-semibold text-ink">{labelForBytes(fromBytes)}</div>
+                  <div className="text-[10.5px] font-mono text-ink/60 break-all mt-0.5">{fromBytes ? ss58FromBytes(fromBytes) : '—'}</div>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="icon-[mdi--arrow-right] text-violet text-2xl" />
+                  <span className="text-[10px] font-mono tracking-[0.18em] uppercase text-violet">{planckToUnit(amount ?? 0n)} UNIT</span>
+                </div>
+                <div className="surface-strong px-4 py-3">
+                  <div className="label-tag mb-1">To</div>
+                  <div className="text-[14px] font-semibold text-ink">{labelForBytes(toBytes)}</div>
+                  <div className="text-[10.5px] font-mono text-ink/60 break-all mt-0.5">{toBytes ? ss58FromBytes(toBytes) : '—'}</div>
+                </div>
+              </div>
+
               {success.blockNumber != null && (
-                <div className="mt-3 text-[13px] text-ink/75">
-                  Block <span className="font-mono text-ink">#{success.blockNumber}</span> · your ML-DSA-44 pubkey is now on-chain. Subsequent transfers will use the revealed key directly.
+                <div className="mt-5 text-[13px] text-ink/75">
+                  Finalized in block <span className="font-mono text-ink">#{success.blockNumber}</span> · the sender's ML-DSA-44 pubkey is now on-chain. Subsequent transfers from <span className="font-medium">{labelForBytes(fromBytes)}</span> will use the revealed key directly.
                 </div>
               )}
-              <div className="mt-4 font-mono text-[11px] text-ink/65 break-all">
+              <div className="mt-3 font-mono text-[11px] text-ink/65 break-all">
                 txHash <span className="text-ink">{success.txHash}</span>
               </div>
             </div>
@@ -346,17 +407,28 @@ export default function PqSend() {
 }
 
 function Field({
-  label, value, onChange, invalid, footer,
+  label, value, onChange, invalid, footer, badge, quickPicks,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   invalid?: boolean
   footer?: string
+  badge?: string
+  quickPicks?: { label: string, value: string }[]
 }) {
+  const knownBadge = badge && /^[A-Z][a-z]+$/.test(badge) // "Alice"/"Bob" → highlight, hex truncations → muted
   return (
     <div>
-      <label className="block label-tag mb-1.5">{label}</label>
+      <div className="flex items-baseline justify-between mb-1.5 gap-3">
+        <label className="block label-tag">{label}</label>
+        {badge && (
+          <span className={`text-[11px] inline-flex items-baseline gap-1 ${knownBadge ? 'text-violet' : 'text-mut'}`}>
+            <span className="font-mono tracking-[0.18em] uppercase text-[9px] opacity-70">resolves →</span>
+            <span className={knownBadge ? 'italic-display text-[15px] leading-none' : 'font-mono'}>{badge}</span>
+          </span>
+        )}
+      </div>
       <input
         type="text"
         value={value}
@@ -368,8 +440,31 @@ function Field({
           invalid ? 'border-rose-ink/50 focus:border-rose-ink' : 'border-rule focus:border-violet'
         }`}
       />
-      {footer && (
-        <div className={`text-[11px] font-mono mt-1 ${invalid ? 'text-rose-ink' : 'text-mut'}`}>{footer}</div>
+      {(footer || quickPicks) && (
+        <div className="flex items-center justify-between gap-3 mt-1">
+          {footer && (
+            <div className={`text-[11px] font-mono ${invalid ? 'text-rose-ink' : 'text-mut'}`}>{footer}</div>
+          )}
+          {quickPicks && (
+            <div className="ml-auto inline-flex items-center gap-1.5">
+              <span className="text-[9px] font-mono tracking-[0.18em] uppercase text-mut">quick</span>
+              {quickPicks.map(q => (
+                <button
+                  key={q.label}
+                  type="button"
+                  onClick={() => onChange(q.value)}
+                  className={`text-[10px] tracking-[0.14em] uppercase font-medium px-2 py-0.5 border transition-colors ${
+                    value.toLowerCase() === q.value.toLowerCase()
+                      ? 'border-violet text-violet bg-violet/[0.06]'
+                      : 'border-rule text-mut hover:border-violet hover:text-violet'
+                  }`}
+                >
+                  {q.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

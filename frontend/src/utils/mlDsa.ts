@@ -24,14 +24,16 @@ export function keygenHex() {
 }
 
 export function sign(sk: Uint8Array, msg: Uint8Array): Uint8Array {
-  const sig = ml_dsa44.sign(sk, msg)
+  // @noble/post-quantum >=0.6 takes (msg, secretKey).
+  const sig = ml_dsa44.sign(msg, sk)
   if (sig.length !== ML_DSA_SIG_LEN)
     throw new Error(`unexpected sig len: ${sig.length}`)
   return sig
 }
 
 export function verify(pk: Uint8Array, msg: Uint8Array, sig: Uint8Array): boolean {
-  return ml_dsa44.verify(pk, msg, sig)
+  // @noble/post-quantum >=0.6 takes (sig, msg, publicKey).
+  return ml_dsa44.verify(sig, msg, pk)
 }
 
 export function pkFromStoredHex(pk_hex: string): Uint8Array {

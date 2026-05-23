@@ -1,3 +1,4 @@
+import type { Tab } from '../components/Nav'
 import type { StepState } from '../components/StatusTracker'
 import { Binary } from 'polkadot-api'
 import { useEffect, useRef, useState } from 'react'
@@ -42,7 +43,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return toHex(new Uint8Array(digest))
 }
 
-export default function Upgrade() {
+export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
   const { api } = useChain()
   const version = useRuntimeVersion()
 
@@ -61,9 +62,15 @@ export default function Upgrade() {
     try {
       const buf = await file.arrayBuffer()
       const bytes = new Uint8Array(buf)
-      if (bytes.length < 4 || bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6D) {
+      const isRawWasm = bytes.length >= 4 && bytes[0] === 0x00 && bytes[1] === 0x61 && bytes[2] === 0x73 && bytes[3] === 0x6D
+      // Substrate's compressed-WASM prefix (8 bytes), used by *.compact.compressed.wasm.
+      // sp-maybe-compressed-blob::WASM_HEADER. set_code accepts either form.
+      const isSubstrateCompressed = bytes.length >= 8
+        && bytes[0] === 0x52 && bytes[1] === 0xBC && bytes[2] === 0x53 && bytes[3] === 0x76
+        && bytes[4] === 0x46 && bytes[5] === 0xDB && bytes[6] === 0x8E && bytes[7] === 0x05
+      if (!isRawWasm && !isSubstrateCompressed) {
         setWasm(undefined)
-        setLoadError(`${file.name} is not a valid WASM module (missing magic \\x00asm).`)
+        setLoadError(`${file.name} is not a runtime WASM (expected raw \\x00asm or Substrate compressed magic).`)
         return
       }
       const sha = await sha256Hex(bytes)
@@ -330,10 +337,14 @@ export default function Upgrade() {
                     <div className="text-ink text-[15px]">CallFiltered</div>
                   </div>
                 </div>
-                <div className="mt-5 inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet">
-                  Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Leap</span>
-                  <span className="icon-[mdi--arrow-right] text-base" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => goto('pq-send')}
+                  className="mt-5 group inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet hover:text-ink transition-colors focus:outline-none"
+                >
+                  Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Transfer</span>
+                  <span className="icon-[mdi--arrow-right] text-base transition-transform group-hover:translate-x-1" />
+                </button>
               </div>
             </div>
           )}
