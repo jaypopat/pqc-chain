@@ -6401,6 +6401,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-pq-wallet"
+version = "0.1.0"
+dependencies = [
+ "fips204",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-pq-registry",
+ "parity-scale-codec",
+ "pq-crypto",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-session"
 version = "45.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
