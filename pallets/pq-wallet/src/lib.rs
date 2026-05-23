@@ -40,10 +40,12 @@ pub type BalanceOf<T> =
 
 /// Canonical, deterministic encoding of a transfer message for ML-DSA signing.
 ///
-/// Layout: SCALE-encoded tuple of
-/// `(TRANSFER_DOMAIN, chain_id, spec_version, from, to, amount, nonce)`.
-/// The domain tag and spec_version bind every signature to a specific
-/// runtime/chain, preventing cross-chain or cross-upgrade replay.
+/// Layout: raw `TRANSFER_DOMAIN` bytes followed by the SCALE-encoded tuple
+/// `(chain_id, spec_version, from, to, amount, nonce)`. The domain tag is
+/// prepended verbatim (not SCALE-length-prefixed) so the message is trivially
+/// recognisable as a QuantumLeap PQ transfer payload. `spec_version` and
+/// `chain_id` bind every signature to a specific runtime/chain, preventing
+/// cross-chain or cross-upgrade replay.
 pub fn encode_transfer_msg<T: Config>(
 	from: &T::AccountId,
 	to: &T::AccountId,
@@ -53,7 +55,10 @@ pub fn encode_transfer_msg<T: Config>(
 	use frame_support::traits::Get;
 	let chain_id: u32 = T::ChainId::get();
 	let spec_version: u32 = <T as frame_system::Config>::Version::get().spec_version;
-	(TRANSFER_DOMAIN, chain_id, spec_version, from, to, amount, nonce).encode()
+	let mut out = Vec::with_capacity(TRANSFER_DOMAIN.len() + 64);
+	out.extend_from_slice(TRANSFER_DOMAIN);
+	(chain_id, spec_version, from, to, amount, nonce).encode_to(&mut out);
+	out
 }
 
 #[frame_support::pallet]

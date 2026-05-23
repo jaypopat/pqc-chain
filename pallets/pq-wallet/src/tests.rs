@@ -11,3 +11,20 @@ fn setup_committed_account(account: AccountId) -> (ml_dsa_44::PublicKey, ml_dsa_
 	assert_ok!(PqRegistry::commit(RuntimeOrigin::signed(account), hash));
 	(pk, sk)
 }
+
+#[test]
+fn encode_transfer_msg_is_stable() {
+	new_test_ext().execute_with(|| {
+		let m1 = encode_transfer_msg::<Test>(&1, &2, 100, 0);
+		let m2 = encode_transfer_msg::<Test>(&1, &2, 100, 0);
+		assert_eq!(m1, m2);
+
+		// Domain prefix is present.
+		assert!(m1.starts_with(TRANSFER_DOMAIN));
+
+		// Different fields produce different messages.
+		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &2, 101, 0));
+		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &2, 100, 1));
+		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &3, 100, 0));
+	});
+}
