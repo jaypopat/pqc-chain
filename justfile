@@ -9,11 +9,14 @@ base := "/tmp/quantumleap-demo"
 default:
     @just --list
 
-# Build everything
+# Build everything + stage the v2 WASM at .demo/v2.compact.wasm for the live demo
 build:
     cargo build --release -p quantumleap-node
     cargo build --release -p quantumleap-runtime-v2
     cargo build --release -p sign-cli
+    mkdir -p .demo
+    cp {{ wasm_path }} .demo/v2.compact.wasm
+    @echo "staged: .demo/v2.compact.wasm ($(stat -c%s .demo/v2.compact.wasm) B)"
 
 # Reset chain state, start node on v1
 demo-reset: build
