@@ -73,8 +73,17 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
-fn cmd_keygen(_out: &str) -> anyhow::Result<()> {
-    todo!()
+fn cmd_keygen(out: &str) -> anyhow::Result<()> {
+    use fips204::ml_dsa_44;
+    use fips204::traits::SerDes;
+    let (pk, sk) = ml_dsa_44::try_keygen().map_err(|e| anyhow::anyhow!("{e:?}"))?;
+    let kp = Keypair {
+        pk_hex: hex::encode(pk.into_bytes()),
+        sk_hex: hex::encode(sk.into_bytes()),
+    };
+    std::fs::write(out, serde_json::to_string_pretty(&kp)?)?;
+    println!("wrote {out}");
+    Ok(())
 }
 
 fn cmd_commit_hash(_pk: &str) -> anyhow::Result<()> {
