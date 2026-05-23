@@ -76,5 +76,18 @@ pub mod pallet {
 			Self::deposit_event(Event::Committed { who, hash });
 			Ok(())
 		}
+
+		/// Replace the signer's existing PQ-pubkey commitment with `new_hash`.
+		/// In v1 this is gated by the classical signature on the extrinsic;
+		/// v2 enforces post-quantum semantics via `pq-wallet`.
+		#[pallet::call_index(1)]
+		#[pallet::weight({10_000})]
+		pub fn recommit(origin: OriginFor<T>, new_hash: H256) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			ensure!(Commitment::<T>::contains_key(&who), Error::<T>::NotCommitted);
+			Commitment::<T>::insert(&who, new_hash);
+			Self::deposit_event(Event::Recommitted { who, new_hash });
+			Ok(())
+		}
 	}
 }
