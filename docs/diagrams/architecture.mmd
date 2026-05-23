@@ -1,0 +1,42 @@
+flowchart TB
+    subgraph V1["Runtime v1 (spec_version = 100, tx_version = 1)"]
+        B1[pallet-balances]
+        S1[pallet-sudo]
+        R1[pallet-pq-registry]
+    end
+
+    subgraph V2["Runtime v2 (spec_version = 200, tx_version = 2)"]
+        B2[pallet-balances *filtered*]
+        S2[pallet-sudo]
+        R2[pallet-pq-registry]
+        W2[pallet-pq-wallet]
+        F2[[BaseCallFilter rejects Balances::transfer*]]
+        B2 -.- F2
+    end
+
+    HOST["node: sp_runtime_interface 'pq_crypto'
+fips204 ml-dsa-44 verify (native)"]
+    V1 -. linked .- HOST
+    V2 -. linked .- HOST
+
+    A1["Alice: ECDSA tx (balances.transfer)"] --> B1
+    A2["Alice: pqRegistry.commit(H(pq_pk_A))"] --> R1
+
+    V1 -- "sudo.set_code(v2_wasm)
+forkless upgrade on stage" --> V2
+
+    A3["Alice: pqWallet.pq_transfer(...)
+carries pk_A + sig
+reveal-if-needed + verify + transfer atomically"] --> W2
+    A4["Bob: balances.transfer → CallFiltered ✗"] -.-> B2
+    A5["Bob: pqWallet.pq_transfer(...)
+no prior commitment → NoCommitment ✗"] -.-> W2
+
+    classDef pre fill:#e8f0ff,stroke:#3b6cb8
+    classDef post fill:#e8fff0,stroke:#2f8a4a
+    classDef bad fill:#ffe8e8,stroke:#b83b3b
+    classDef host fill:#fff8e1,stroke:#b8893b
+    class V1,B1,S1,R1,A1,A2 pre
+    class V2,B2,S2,R2,W2,F2,A3 post
+    class A4,A5 bad
+    class HOST host
