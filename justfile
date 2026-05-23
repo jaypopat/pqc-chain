@@ -16,12 +16,12 @@ build:
     cargo build --release -p sign-cli
 
 # Reset chain state, start node on v1
-demo-reset:
-    -pkill quantumleap-node || true
-    rm -rf {{base}}
-    mkdir -p {{base}}
-    ./target/release/quantumleap-node --dev --base-path {{base}} \
-        --rpc-port 9944 --rpc-cors all 2>&1 > {{base}}/node.log &
+demo-reset: build
+    -pkill -x quantumleap-nod || true
+    rm -rf {{ base }}
+    mkdir -p {{ base }}
+    ./target/release/quantumleap-node --dev --base-path {{ base }} \
+        --rpc-port 9944 --rpc-cors all 2>&1 > {{ base }}/node.log &
     sleep 4
     @echo "node up, spec_version:"
     @curl -s -H "Content-Type: application/json" \
@@ -39,15 +39,15 @@ demo-keygen:
 demo-presign FROM TO AMOUNT NONCE:
     ./target/release/sign-cli sign-transfer \
         --sk .demo/alice.json \
-        --from {{FROM}} --to {{TO}} \
-        --amount {{AMOUNT}} --nonce {{NONCE}} \
-        --out .demo/transfer{{NONCE}}.json
+        --from {{ FROM }} --to {{ TO }} \
+        --amount {{ AMOUNT }} --nonce {{ NONCE }} \
+        --out .demo/transfer{{ NONCE }}.json
 
 # Print v2 WASM size + first hex bytes (for sudo.setCode)
 demo-wasm:
-    test -f {{wasm_path}} || just build
-    @echo "WASM size: $(stat -c%s {{wasm_path}}) bytes"
-    @echo "First 200 hex chars: 0x$(xxd -p {{wasm_path}} | tr -d '\n' | head -c 200)..."
+    test -f {{ wasm_path }} || just build
+    @echo "WASM size: $(stat -c%s {{ wasm_path }}) bytes"
+    @echo "First 200 hex chars: 0x$(xxd -p {{ wasm_path }} | tr -d '\n' | head -c 200)..."
 
 # Confirm upgraded
 demo-version:
@@ -66,4 +66,10 @@ demo-apps:
 
 # Open the frontend
 demo-ui:
-    cd frontend && npm run dev
+    cd frontend && bun run dev
+
+# Spin up everything: reset+start node, then run frontend in foreground
+demo-up: demo-reset
+    @echo "node running on ws://127.0.0.1:9944 (logs: {{ base }}/node.log)"
+    @echo "starting frontend..."
+    cd frontend && bun run dev

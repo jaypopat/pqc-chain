@@ -1,6 +1,6 @@
 [workspace.package]
 license = "Unlicense"
-authors = ["Jay Popat <jpsubs@tutamail.com>"]
+authors = ["Jay Popat"]
 homepage = "https://github.com/jaypopat/pqc-chain"
 repository = "https://github.com/jaypopat/pqc-chain.git"
 edition = "2021"
