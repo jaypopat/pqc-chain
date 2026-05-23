@@ -61,6 +61,7 @@ zero-prefixed-literal = { level = "allow", priority = 2 }            # 00_1000_0
 [workspace.dependencies]
 quantumleap-runtime-v1 = { path = "./runtime/v1", default-features = false }
 pallet-template = { path = "./pallets/template", default-features = false }
+pq-crypto = { path = "./primitives/pq-crypto", default-features = false }
 clap = { version = "4.5.13" }
 frame-benchmarking-cli = { version = "53.0.0", default-features = false }
 frame-metadata-hash-extension = { version = "0.13.0", default-features = false }

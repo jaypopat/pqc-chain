@@ -7664,6 +7664,7 @@ dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
+ "pq-crypto",
  "quantumleap-runtime-v1",
  "sc-basic-authorship",
  "sc-cli",
