@@ -22,15 +22,15 @@ function useRollValue(value: string | number) {
   return { rolling, prev }
 }
 
-function Roll({ value, hot = false, mono = true }: { value: string | number, hot?: boolean, mono?: boolean }) {
+function Roll({ value, hot = false, mono = true, className = '' }: { value: string | number, hot?: boolean, mono?: boolean, className?: string }) {
   const { rolling, prev } = useRollValue(value)
   const family = mono ? 'font-mono' : ''
   const color = hot ? 'text-violet font-semibold' : 'text-ink'
   if (!rolling) {
-    return <span className={`${family} ${color}`}>{value}</span>
+    return <span className={`${family} ${color} ${className}`}>{value}</span>
   }
   return (
-    <span className={`${family} ${color} relative inline-block overflow-hidden align-baseline`} style={{ minWidth: '2ch' }}>
+    <span className={`${family} ${color} ${className} relative inline-block overflow-hidden align-baseline`} style={{ minWidth: '2ch' }}>
       <span className="invisible">{value}</span>
       <span className="absolute inset-0 roll-out">{prev}</span>
       <span className="absolute inset-0 roll-in">{value}</span>
@@ -39,27 +39,22 @@ function Roll({ value, hot = false, mono = true }: { value: string | number, hot
 }
 
 interface RuntimeSidecarProps {
-  variant?: 'panel' | 'compact'
+  variant?: 'panel' | 'hero'
 }
 
 export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProps) {
   const { current, bestBlock, transition, isPostQuantum } = usePqUpgrade()
 
-  // Toggle data-pq on <html> when post-quantum mode active
   useEffect(() => {
-    if (isPostQuantum) {
-      document.documentElement.setAttribute('data-pq', 'active')
-    }
-    else {
-      document.documentElement.removeAttribute('data-pq')
-    }
+    if (isPostQuantum) document.documentElement.setAttribute('data-pq', 'active')
+    else document.documentElement.removeAttribute('data-pq')
   }, [isPostQuantum])
 
   const halo = transition ? 'halo' : ''
 
   if (!current) {
     return (
-      <aside className={`surface p-5 ${variant === 'compact' ? 'text-[11px]' : ''}`}>
+      <aside className="surface p-5">
         <div className="label-tag mb-3">Runtime</div>
         <div className="text-mut font-mono text-[12px] inline-flex items-center gap-2">
           <span className="icon-[mdi--lan-pending] animate-pulse" />
@@ -69,6 +64,66 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
     )
   }
 
+  if (variant === 'hero') {
+    return (
+      <aside className={`surface p-6 ${halo}`}>
+        <header className="flex items-center justify-between mb-5">
+          <div className="label-tag">Runtime · live</div>
+          <span className="live-dot inline-block w-2 h-2 rounded-full bg-success" />
+        </header>
+
+        {/* Hero number: spec_version */}
+        <div>
+          <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-1">spec_version</div>
+          <Roll
+            value={current.spec}
+            hot={!!transition || isPostQuantum}
+            className="text-[64px] font-semibold tracking-[-0.04em] leading-none tabular-nums"
+          />
+        </div>
+
+        {/* Verifier — the second big idea */}
+        <div className="mt-5 pt-5 border-t border-rule">
+          <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-1">verifier</div>
+          <div className="text-[20px] font-semibold text-ink leading-none">
+            <Roll value={current.verifier} hot={!!transition || isPostQuantum} mono={false} />
+          </div>
+        </div>
+
+        {/* tx_version + best block, smaller row */}
+        <div className="mt-5 pt-4 border-t border-rule grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-1">tx_version</div>
+            <div className="font-mono text-[15px] text-ink tabular-nums"><Roll value={current.tx} hot={!!transition || isPostQuantum} /></div>
+          </div>
+          <div>
+            <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-1">best block</div>
+            <div className="font-mono text-[15px] text-ink tabular-nums">#{bestBlock || '—'}</div>
+          </div>
+        </div>
+
+        {/* impl footer, soft */}
+        <div className="mt-5 pt-3 border-t border-rule">
+          <div className="font-mono text-[10.5px] text-ink/55 break-all">
+            <Roll value={current.impl} mono />
+          </div>
+        </div>
+
+        {transition && (
+          <div className="mt-5 -mx-6 -mb-6 px-6 py-3 bg-violet/[0.07] border-t border-violet/30">
+            <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-violet">runtime swapped</div>
+            <div className="mt-1 text-[12px] text-ink/80 leading-snug">
+              spec {transition.from.spec} → <span className="font-semibold text-violet">{transition.to.spec}</span>
+              <span className="text-ink/40"> · </span>
+              verifier <span className="italic-display">{transition.to.verifier.toLowerCase()}</span> live
+            </div>
+          </div>
+        )}
+      </aside>
+    )
+  }
+
+  // 'panel' — dense stage-page sidecar
   return (
     <aside className={`surface p-5 ${halo}`}>
       <header className="flex items-center justify-between mb-4">
@@ -79,7 +134,7 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
         </div>
       </header>
 
-      <dl className="space-y-0">
+      <dl>
         <Row k="name" v={<span className="font-mono text-ink">{current.name}</span>} />
         <Row k="impl" v={<Roll value={current.impl} mono />} />
         <Row k="spec_version" v={<Roll value={current.spec} hot={!!transition} mono />} />
@@ -89,9 +144,7 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
 
       <div className="mt-5 pt-4 border-t border-rule">
         <div className="label-tag mb-1">Best block</div>
-        <div className="font-mono text-ink text-[17px] font-semibold">
-          #<span className="tabular-nums">{bestBlock || '—'}</span>
-        </div>
+        <div className="font-mono text-ink text-[17px] font-semibold tabular-nums">#{bestBlock || '—'}</div>
       </div>
 
       <div className="mt-4 pt-3 border-t border-rule">

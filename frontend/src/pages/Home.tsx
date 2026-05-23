@@ -54,7 +54,7 @@ export default function Home({ goto }: HomeProps) {
         </div>
 
         <div className="lg:pb-3">
-          <RuntimeSidecar />
+          <RuntimeSidecar variant="hero" />
         </div>
       </section>
 
@@ -86,35 +86,81 @@ export default function Home({ goto }: HomeProps) {
         <div className="rule-x mt-2" />
       </section>
 
-      {/* DIFF */}
-      <section className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-px bg-rule border border-rule">
-        <div className="bg-paper/80 p-8">
-          <div className="label-tag mb-5">Before · runtime v1</div>
-          <Diff k="verifier" v="ECDSA" />
-          <Diff k="spec_version" v="100" />
-          <Diff k="tx_version" v="1" />
-          <Diff k="balances.transfer" v="open" />
-          <Diff k="pq_wallet.pq_transfer" v="—" muted />
+      {/* DIFF — read each row left-to-right through the arrow */}
+      <section className="mt-16 surface px-8 py-8">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-baseline gap-6 pb-4 border-b border-rule">
+          <div className="label-tag">Before · runtime v1</div>
+          <div />
+          <div className="label-tag text-violet">After · runtime v2</div>
         </div>
-        <div className="bg-violet/[0.04] p-8 relative">
-          <div className="label-tag mb-5 text-violet">After · runtime v2</div>
-          <Diff k="verifier" v="ML-DSA-44" hot />
-          <Diff k="spec_version" v="200" hot />
-          <Diff k="tx_version" v="2" hot />
-          <Diff k="balances.transfer" v="CallFiltered" muted />
-          <Diff k="pq_wallet.pq_transfer" v="open" hot />
+
+        <TransformRow
+          k="verifier"
+          before="ECDSA"
+          after="ML-DSA-44"
+          accent="hero"
+        />
+        <TransformRow
+          k="balances.transfer"
+          before="open"
+          after="CallFiltered"
+          afterLocked
+        />
+        <TransformRow
+          k="pq_wallet.pq_transfer"
+          before=""
+          beforeAbsent
+          after="open"
+          afterOpened
+        />
+
+        <div className="mt-6 pt-4 border-t border-rule grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+          <div className="font-mono text-[12px] text-ink tabular-nums">spec_version 100 · tx_version 1</div>
+          <span className="icon-[mdi--arrow-right] text-[14px] text-ink/40" />
+          <div className="font-mono text-[12px] text-ink tabular-nums">spec_version <span className="text-violet font-semibold">200</span> · tx_version <span className="text-violet font-semibold">2</span></div>
         </div>
       </section>
     </div>
   )
 }
 
-function Diff({ k, v, hot, muted }: { k: string, v: string, hot?: boolean, muted?: boolean }) {
-  const color = hot ? 'text-violet font-semibold' : muted ? 'text-mut' : 'text-ink'
+interface TransformRowProps {
+  k: string
+  before: string
+  after: string
+  beforeAbsent?: boolean   // render before as a dashed slot (no value yet)
+  afterLocked?: boolean    // after is closed off — show with a lock icon
+  afterOpened?: boolean    // after is newly available — render in violet
+  accent?: 'hero'
+}
+
+function TransformRow({ k, before, after, beforeAbsent, afterLocked, afterOpened, accent }: TransformRowProps) {
+  const isHero = accent === 'hero'
+  const size = isHero ? 'text-[22px] font-semibold tracking-[-0.015em]' : 'text-[16px] font-medium'
+
+  const beforeNode = beforeAbsent
+    ? <span className={`font-mono ${size} text-ink/35`}>(not available)</span>
+    : <span className={`font-mono ${size} text-ink`}>{before}</span>
+
+  const afterNode = afterLocked
+    ? (
+        <span className={`font-mono ${size} text-ink inline-flex items-center gap-2`}>
+          <span className="icon-[mdi--lock-outline] text-[18px] text-ink/55" />
+          {after}
+        </span>
+      )
+    : (isHero || afterOpened)
+        ? <span className={`font-mono ${size} text-violet font-semibold`}>{after}</span>
+        : <span className={`font-mono ${size} text-ink`}>{after}</span>
+
   return (
-    <div className="flex items-baseline justify-between py-2.5 dash-row last:border-0">
-      <span className="text-[11px] font-mono text-mut">{k}</span>
-      <span className={`text-[13px] font-mono ${color}`}>{v}</span>
+    <div className="py-5 border-b border-rule last:border-0">
+      <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-2">{k}</div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+        <div>{beforeNode}</div>
+        <span className={`icon-[mdi--arrow-right] text-[20px] ${isHero || afterOpened ? 'text-violet' : 'text-ink/40'}`} />
+        <div>{afterNode}</div>
+      </div>
     </div>
   )
 }
