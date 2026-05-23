@@ -66,7 +66,11 @@ pub mod pallet {
 	use super::{BalanceOf, encode_transfer_msg};
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{Currency, ExistenceRequirement, Get};
+	use frame_support::unsigned::ValidateUnsigned;
 	use frame_system::pallet_prelude::*;
+	use sp_runtime::transaction_validity::{
+		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
+	};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_pq_registry::Config {
@@ -179,6 +183,45 @@ pub mod pallet {
 			T::Currency::transfer(&from, &to, amount, ExistenceRequirement::AllowDeath)?;
 			Self::deposit_event(Event::PqTransfer { from, to, amount });
 			Ok(())
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+
+		fn validate_unsigned(
+			_source: TransactionSource,
+			call: &Self::Call,
+		) -> TransactionValidity {
+			let Call::pq_transfer { from, to, amount, nonce, pq_pubkey, sig } = call else {
+				return InvalidTransaction::Call.into();
+			};
+
+			if let Some(stored) = Revealed::<T>::get(from) {
+				if stored.as_slice() != pq_pubkey.as_slice() {
+					return InvalidTransaction::Custom(1).into();
+				}
+			} else {
+				let Some(commitment) = pallet_pq_registry::Commitment::<T>::get(from) else {
+					return InvalidTransaction::Custom(2).into();
+				};
+				if commitment != pq_crypto::commitment_hash(pq_pubkey) {
+					return InvalidTransaction::Custom(3).into();
+				}
+			}
+
+			let msg = super::encode_transfer_msg::<T>(from, to, *amount, *nonce);
+			if !pq_crypto::pq_crypto::verify(pq_pubkey, sig, &msg) {
+				return InvalidTransaction::BadProof.into();
+			}
+
+			ValidTransaction::with_tag_prefix("PqTransfer")
+				.priority(100)
+				.and_provides((from.clone(), *nonce))
+				.longevity(64)
+				.propagate(true)
+				.build()
 		}
 	}
 }

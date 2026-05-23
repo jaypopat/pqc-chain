@@ -1,7 +1,10 @@
 use crate::{mock::*, *};
 use fips204::ml_dsa_44;
 use fips204::traits::{SerDes, Signer};
+use frame_support::pallet_prelude::*;
+use frame_support::unsigned::ValidateUnsigned;
 use frame_support::{assert_noop, assert_ok};
+use sp_runtime::transaction_validity::TransactionSource;
 
 /// Helper: generate a keypair and commit its `commitment_hash` for `account`.
 fn setup_committed_account(account: AccountId) -> (ml_dsa_44::PublicKey, ml_dsa_44::PrivateKey) {
@@ -189,5 +192,27 @@ fn encode_transfer_msg_is_stable() {
 		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &2, 101, 0));
 		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &2, 100, 1));
 		assert_ne!(m1, encode_transfer_msg::<Test>(&1, &3, 100, 0));
+	});
+}
+
+#[test]
+fn validate_unsigned_rejects_unsigned_with_no_commitment() {
+	new_test_ext().execute_with(|| {
+		let (pk, sk) = ml_dsa_44::try_keygen().unwrap();
+		let pk_bytes: BoundedVec<u8, ConstU32<1312>> =
+			pk.into_bytes().to_vec().try_into().unwrap();
+		let msg = encode_transfer_msg::<Test>(&1, &2, 10, 0);
+		let sig: BoundedVec<u8, ConstU32<2420>> =
+			sk.try_sign(&msg, &[]).unwrap().to_vec().try_into().unwrap();
+		let call = Call::<Test>::pq_transfer {
+			from: 1,
+			to: 2,
+			amount: 10,
+			nonce: 0,
+			pq_pubkey: pk_bytes,
+			sig,
+		};
+		let res = PqWallet::validate_unsigned(TransactionSource::External, &call);
+		assert!(res.is_err());
 	});
 }
