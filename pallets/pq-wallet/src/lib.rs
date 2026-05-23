@@ -65,7 +65,7 @@ pub fn encode_transfer_msg<T: Config>(
 pub mod pallet {
 	use super::{BalanceOf, encode_transfer_msg};
 	use frame_support::pallet_prelude::*;
-	use frame_support::traits::{Currency, Get};
+	use frame_support::traits::{Currency, ExistenceRequirement, Get};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
@@ -125,6 +125,60 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		// pq_transfer implemented in Task 11.
+		/// Apply a post-quantum-signed transfer.
+		///
+		/// Order of checks (load-bearing for the contract in §4.3 of the spec):
+		/// 1. Reveal-if-needed / pubkey consistency against the registry commitment.
+		/// 2. Nonce must equal the next-expected nonce.
+		/// 3. ML-DSA-44 signature verification via the host function.
+		/// 4. State mutation: bump nonce, transfer balance, emit event.
+		///
+		/// Must be dispatched as an unsigned extrinsic (`ensure_none`); the
+		/// classical origin layer is bypassed because the signer holds a PQ
+		/// keypair, not an ECDSA/sr25519 one.
+		#[pallet::call_index(0)]
+		#[pallet::weight({100_000})]
+		pub fn pq_transfer(
+			origin: OriginFor<T>,
+			from: T::AccountId,
+			to: T::AccountId,
+			amount: BalanceOf<T>,
+			nonce: u64,
+			pq_pubkey: BoundedVec<u8, ConstU32<1312>>,
+			sig: BoundedVec<u8, ConstU32<2420>>,
+		) -> DispatchResult {
+			ensure_none(origin)?;
+
+			// 1. Reveal-if-needed.
+			if let Some(stored) = Revealed::<T>::get(&from) {
+				ensure!(stored.as_slice() == pq_pubkey.as_slice(), Error::<T>::PubkeyMismatch);
+			} else {
+				let commitment = pallet_pq_registry::Commitment::<T>::get(&from)
+					.ok_or(Error::<T>::NoCommitment)?;
+				ensure!(
+					commitment == pq_crypto::commitment_hash(&pq_pubkey),
+					Error::<T>::CommitmentMismatch,
+				);
+				Revealed::<T>::insert(&from, pq_pubkey.clone());
+				Self::deposit_event(Event::Revealed { who: from.clone() });
+			}
+
+			// 2. Nonce.
+			let expected = Nonce::<T>::get(&from);
+			ensure!(nonce == expected, Error::<T>::BadNonce);
+
+			// 3. Signature (host fn).
+			let msg = encode_transfer_msg::<T>(&from, &to, amount, nonce);
+			ensure!(
+				pq_crypto::pq_crypto::verify(&pq_pubkey, &sig, &msg),
+				Error::<T>::BadSignature,
+			);
+
+			// 4. State mutation.
+			Nonce::<T>::insert(&from, nonce + 1);
+			T::Currency::transfer(&from, &to, amount, ExistenceRequirement::AllowDeath)?;
+			Self::deposit_event(Event::PqTransfer { from, to, amount });
+			Ok(())
+		}
 	}
 }
