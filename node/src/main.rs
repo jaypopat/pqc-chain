@@ -1,4 +1,4 @@
-//! Substrate Node Template CLI library.
+//! QuantumLeap node CLI.
 #![warn(missing_docs)]
 
 mod benchmarking;
