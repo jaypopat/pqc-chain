@@ -71,6 +71,9 @@ type SingleBlockMigrations = ();
 /// but overridden as needed.
 #[derive_impl(frame_system::config_preludes::SolochainDefaultConfig)]
 impl frame_system::Config for Runtime {
+	/// Reject classical pallet_balances transfer* calls; funds move via
+	/// pallet_pq_wallet::pq_transfer in v2.
+	type BaseCallFilter = PqBaseCallFilter;
 	/// The block type for the runtime.
 	type Block = Block;
 	/// Block & extrinsics weights: base values and limits.
@@ -164,12 +167,32 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
-}
-
 impl pallet_pq_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+}
+
+parameter_types! {
+	pub const QlChainId: u32 = 42;
+}
+
+impl pallet_pq_wallet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ChainId = QlChainId;
+}
+
+/// BaseCallFilter for runtime v2: reject classical (sr25519-signed)
+/// `pallet_balances::transfer*` calls. Users must move funds via
+/// `pallet_pq_wallet::pq_transfer` (ML-DSA-44 signed, unsigned extrinsic
+/// gated by `ValidateUnsigned`). All other dispatchables are unaffected.
+pub struct PqBaseCallFilter;
+impl frame_support::traits::Contains<RuntimeCall> for PqBaseCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		!matches!(
+			call,
+			RuntimeCall::Balances(pallet_balances::Call::transfer_allow_death { .. })
+				| RuntimeCall::Balances(pallet_balances::Call::transfer_keep_alive { .. })
+				| RuntimeCall::Balances(pallet_balances::Call::transfer_all { .. })
+		)
+	}
 }

@@ -31,7 +31,6 @@ pallet-grandpa.workspace = true
 pallet-pq-registry.workspace = true
 pallet-pq-wallet.workspace = true
 pallet-sudo.workspace = true
-pallet-template.workspace = true
 pq-crypto.workspace = true
 pallet-timestamp.workspace = true
 pallet-transaction-payment.workspace = true
@@ -74,7 +73,6 @@ std = [
 	"pallet-pq-registry/std",
 	"pallet-pq-wallet/std",
 	"pallet-sudo/std",
-	"pallet-template/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -107,7 +105,6 @@ runtime-benchmarks = [
 	"pallet-pq-registry/runtime-benchmarks",
 	"pallet-pq-wallet/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
-	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
@@ -123,7 +120,6 @@ try-runtime = [
 	"pallet-pq-registry/try-runtime",
 	"pallet-pq-wallet/try-runtime",
 	"pallet-sudo/try-runtime",
-	"pallet-template/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",

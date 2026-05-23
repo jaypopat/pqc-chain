@@ -61,18 +61,19 @@ impl_opaque_keys! {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: alloc::borrow::Cow::Borrowed("quantumleap-runtime-v1"),
-	impl_name: alloc::borrow::Cow::Borrowed("quantumleap-runtime-v1"),
+	spec_name: alloc::borrow::Cow::Borrowed("quantumleap"),
+	impl_name: alloc::borrow::Cow::Borrowed("quantumleap"),
 	authoring_version: 1,
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
-	//   the compatible custom types.
-	spec_version: 100,
+	// Bumped from 100 -> 200 for the v2 upgrade (PQ wallet + classical-transfer filter).
+	spec_version: 200,
 	impl_version: 1,
 	apis: apis::RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	// Bumped from 1 -> 2: v2's BaseCallFilter rejects pallet_balances transfer*
+	// calls that v1 accepted, which is a transaction-semantic change.
+	transaction_version: 2,
 	system_version: 1,
 };
 
@@ -216,10 +217,9 @@ mod runtime {
 	#[runtime::pallet_index(6)]
 	pub type Sudo = pallet_sudo;
 
-	// Include the custom logic from the pallet-template in the runtime.
-	#[runtime::pallet_index(7)]
-	pub type Template = pallet_template;
-
 	#[runtime::pallet_index(8)]
 	pub type PqRegistry = pallet_pq_registry;
+
+	#[runtime::pallet_index(9)]
+	pub type PqWallet = pallet_pq_wallet;
 }
