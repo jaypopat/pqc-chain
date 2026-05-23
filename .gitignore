@@ -25,3 +25,4 @@ scripts/e2e/node_modules/
 # Per-machine skill cache (declared in skills-lock.json; reinstalled locally)
 .agents/
 skills-lock.json
+.superpowers/

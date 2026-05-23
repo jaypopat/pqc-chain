@@ -11,7 +11,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('home')
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50">
+    <div className="min-h-screen flex flex-col">
       <Header tab={tab} setTab={setTab} />
       <main className="flex-1">
         {tab === 'home' && <Home goto={setTab} />}

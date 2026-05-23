@@ -1,9 +1,9 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-zinc-200 bg-white">
-      <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-zinc-500 font-mono">
-        <span>QuantumLeap · forkless ECDSA → ML-DSA · Substrate solochain</span>
-        <span>2026-05</span>
+    <footer className="mt-auto border-t border-rule">
+      <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between text-[11px] font-mono text-mut">
+        <span>QuantumLeap · ECDSA <span className="text-violet">→</span> ML-DSA-44 · Substrate solochain</span>
+        <span className="tracking-[0.18em] uppercase">post-quantum, lazily revealed</span>
       </div>
     </footer>
   )

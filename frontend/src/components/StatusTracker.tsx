@@ -12,37 +12,17 @@ interface StatusTrackerProps {
 
 export default function StatusTracker({ steps }: StatusTrackerProps) {
   return (
-    <ol className="space-y-2">
+    <ol className="relative">
       {steps.map((s, i) => {
-        let icon = 'icon-[mdi--circle-outline] text-zinc-300'
-        let label = 'text-zinc-400'
-        if (s.state === 'active') {
-          icon = 'icon-[mdi--loading] text-emerald-600 animate-spin'
-          label = 'text-zinc-900'
-        }
-        if (s.state === 'done') {
-          icon = 'icon-[mdi--check-circle] text-emerald-600'
-          label = 'text-zinc-700'
-        }
-        if (s.state === 'error') {
-          icon = 'icon-[mdi--alert-circle] text-rose-600'
-          label = 'text-rose-700'
-        }
+        const isLast = i === steps.length - 1
         return (
-          <li key={i} className="flex items-start gap-3">
-            <span className={`${icon} mt-0.5`} />
-            <div className="flex-1 min-w-0">
-              <div className={`text-sm font-mono ${label}`}>
-                [
-                {i + 1}
-                /
-                {steps.length}
-                ]
-                {' '}
-                {s.label}
-              </div>
+          <li key={i} className="relative flex items-start gap-4 pb-5 last:pb-0">
+            {!isLast && <span className="absolute left-[9px] top-5 bottom-0 w-px bg-rule" />}
+            <Indicator state={s.state} />
+            <div className="flex-1 min-w-0 -mt-0.5">
+              <div className={`text-[13px] leading-snug ${labelColor(s.state)}`}>{s.label}</div>
               {s.detail && (
-                <div className="text-xs text-zinc-500 font-mono mt-0.5 break-all">{s.detail}</div>
+                <div className="text-[11px] text-mut font-mono mt-1 break-all">{s.detail}</div>
               )}
             </div>
           </li>
@@ -50,4 +30,48 @@ export default function StatusTracker({ steps }: StatusTrackerProps) {
       })}
     </ol>
   )
+}
+
+function Indicator({ state }: { state: StepState }) {
+  const ring = 'absolute inset-0 rounded-full border-2'
+  if (state === 'done') {
+    return (
+      <span className="relative inline-block w-[18px] h-[18px] mt-0.5">
+        <span className={`${ring} border-violet bg-violet`} />
+        <span className="absolute inset-0 flex items-center justify-center text-paper">
+          <span className="icon-[mdi--check] text-[12px]" />
+        </span>
+      </span>
+    )
+  }
+  if (state === 'active') {
+    return (
+      <span className="relative inline-block w-[18px] h-[18px] mt-0.5">
+        <span className={`${ring} border-violet`} />
+        <span className="absolute inset-[3px] rounded-full bg-violet ring-pulse" />
+      </span>
+    )
+  }
+  if (state === 'error') {
+    return (
+      <span className="relative inline-block w-[18px] h-[18px] mt-0.5">
+        <span className={`${ring} border-rose-ink bg-rose-wash`} />
+        <span className="absolute inset-0 flex items-center justify-center text-rose-ink">
+          <span className="icon-[mdi--close] text-[12px]" />
+        </span>
+      </span>
+    )
+  }
+  return (
+    <span className="relative inline-block w-[18px] h-[18px] mt-0.5">
+      <span className={`${ring} border-rule-strong bg-white/60`} />
+    </span>
+  )
+}
+
+function labelColor(s: StepState) {
+  if (s === 'done') return 'text-ink'
+  if (s === 'active') return 'text-ink font-medium'
+  if (s === 'error') return 'text-rose-ink'
+  return 'text-mut'
 }

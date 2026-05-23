@@ -1,7 +1,7 @@
 import type { Tab } from './Nav'
 import Connect from './Connect'
 import Nav from './Nav'
-import SpecBanner from './SpecBanner'
+import Wordmark from './Wordmark'
 
 interface HeaderProps {
   tab: Tab
@@ -9,26 +9,12 @@ interface HeaderProps {
 }
 
 export default function Header({ tab, setTab }: HeaderProps) {
-  const showWallet = tab !== 'upgrade'
-
   return (
-    <header className="border-b border-zinc-200 bg-white">
-      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-2">
-          <span className="icon-[mdi--atom] text-2xl text-emerald-600" />
-          <span className="text-lg font-semibold tracking-tight text-zinc-950">
-            QuantumLeap
-          </span>
-        </div>
-
+    <header className="sticky top-0 z-30 backdrop-blur-md bg-paper/70 border-b border-rule">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+        <Wordmark onClick={() => setTab('home')} />
         <Nav tab={tab} setTab={setTab} />
-
-        <div className="flex items-center gap-3">
-          <SpecBanner />
-          <div className={showWallet ? '' : 'invisible'}>
-            <Connect />
-          </div>
-        </div>
+        <Connect />
       </div>
     </header>
   )

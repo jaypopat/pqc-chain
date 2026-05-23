@@ -1,7 +1,11 @@
 import type { StepState } from '../components/StatusTracker'
 import { Binary } from 'polkadot-api'
 import { useEffect, useRef, useState } from 'react'
+import Button from '../components/Button'
+import Card from '../components/Card'
 import FileDropZone from '../components/FileDropZone'
+import StageHeader from '../components/StageHeader'
+import StageLayout from '../components/StageLayout'
 import StatusTracker from '../components/StatusTracker'
 import { useChain } from '../hooks/useChain'
 import { useRuntimeVersion } from '../hooks/useRuntimeVersion'
@@ -78,7 +82,6 @@ export default function Upgrade() {
     }
   }
 
-  // Watch for the spec_version flip to advance step 3.
   useEffect(() => {
     if (!submit) return
     if (step3 !== 'active') return
@@ -89,11 +92,7 @@ export default function Upgrade() {
     }
   }, [version, submit, step3])
 
-  useEffect(() => {
-    return () => {
-      subRef.current?.unsubscribe()
-    }
-  }, [])
+  useEffect(() => () => { subRef.current?.unsubscribe() }, [])
 
   function reset() {
     subRef.current?.unsubscribe()
@@ -107,10 +106,8 @@ export default function Upgrade() {
   async function onSubmit() {
     if (!wasm || !version) return
     reset()
-
     const startSpec = version.spec
-    const startedAt = performance.now()
-    setSubmit({ startSpec, startedAt })
+    setSubmit({ startSpec, startedAt: performance.now() })
     setStep1('active')
 
     try {
@@ -122,30 +119,22 @@ export default function Upgrade() {
 
       const sub = sudoTx.signSubmitAndWatch(aliceSigner).subscribe({
         next: (evt) => {
-          if (evt.type === 'signed' || evt.type === 'broadcasted') {
-            setStep1('done')
-          }
+          if (evt.type === 'signed' || evt.type === 'broadcasted') setStep1('done')
           if (evt.type === 'txBestBlocksState' && evt.found) {
             setStep1('done')
             setStep2('done')
             setStep3('active')
-            setSubmit(s => s ? {
-              ...s,
-              txHash: evt.txHash,
-              blockNumber: evt.block.number,
-            } : s)
+            setSubmit(s => s ? { ...s, txHash: evt.txHash, blockNumber: evt.block.number } : s)
           }
-          if (evt.type === 'finalized') {
-            if (!evt.ok) {
-              const errType = evt.dispatchError?.type ?? 'Unknown'
-              setStep1(p => p === 'done' ? p : 'error')
-              setStep2('error')
-              setStep3('error')
-              setSubmit(s => s ? { ...s, error: `dispatchError: ${errType}` } : s)
-            }
+          if (evt.type === 'finalized' && !evt.ok) {
+            const errType = evt.dispatchError?.type ?? 'Unknown'
+            setStep1(p => p === 'done' ? p : 'error')
+            setStep2('error')
+            setStep3('error')
+            setSubmit(s => s ? { ...s, error: `dispatchError: ${errType}` } : s)
           }
         },
-        error: (err: unknown) => {
+        error: (err) => {
           const msg = err instanceof Error ? err.message : String(err)
           setStep1(p => p === 'done' ? p : 'error')
           setStep2(p => p === 'done' ? p : 'error')
@@ -166,234 +155,190 @@ export default function Upgrade() {
   const targetSpec = wasm?.inferredSpec
   const alreadyV2 = currentSpec === 200
   const needsConfirm = alreadyV2 && !confirmDowngrade
-
-  const submitDisabled
-    = !wasm
-      || !version
-      || needsConfirm
-      || step1 === 'active'
-      || (submit !== undefined && !submit.error && step3 !== 'done')
-
-  const elapsedMs
-    = submit?.finishedAt != null
-      ? Math.round(submit.finishedAt - submit.startedAt)
-      : undefined
+  const submitDisabled = !wasm || !version || needsConfirm || step1 === 'active' || (submit !== undefined && !submit.error && step3 !== 'done')
+  const elapsedMs = submit?.finishedAt != null ? Math.round(submit.finishedAt - submit.startedAt) : undefined
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-8">
-      <div>
-        <div className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Stage 2</div>
-        <h2 className="text-3xl tracking-tight font-semibold text-zinc-950 mb-4">Upgrade</h2>
-        <p className="text-sm text-zinc-600 max-w-xl">
-          Drop the v2 runtime WASM and flip the chain forklessly. Signed by the
-          dev sudo key //Alice — no wallet popup on a multi-hundred-kB extrinsic.
-        </p>
-      </div>
+    <StageLayout>
+      <StageHeader
+        num="02"
+        kicker="Runtime swap"
+        title="Upgrade"
+        blurb="Drop the v2 runtime WASM and flip the chain forklessly. Signed by the dev sudo key //Alice — no wallet popup on a multi-hundred-kB extrinsic."
+      />
 
       {!wasm && (
         <FileDropZone
           accept=".wasm"
           onFile={handleFile}
-          label="Drop runtime WASM here"
-          hint="or click to browse  (.wasm only)"
+          label="Drop runtime WASM"
+          hint=".wasm only — or click to browse"
         />
       )}
 
       {loadError && (
-        <div className="border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 flex items-start gap-2">
-          <span className="icon-[mdi--alert] mt-0.5 text-rose-600" />
-          <div className="font-mono">{loadError}</div>
+        <div className="mt-5 bg-rose-wash/50 border border-rose-ink/20 px-4 py-3 text-rose-ink text-[12px] font-mono break-all flex items-start gap-2">
+          <span className="icon-[mdi--alert-circle] mt-0.5 shrink-0" />
+          <div>{loadError}</div>
         </div>
       )}
 
       {wasm && (
-        <div className="bg-white border border-zinc-200 p-6 space-y-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="icon-[mdi--file-code-outline] text-emerald-600 text-xl" />
-              <span className="font-mono text-sm text-zinc-900">{wasm.filename}</span>
+        <div className="space-y-5 mt-2">
+          <Card label="Loaded runtime" tag={`spec → ${wasm.inferredSpec}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="icon-[mdi--file-code-outline] text-violet text-xl shrink-0" />
+                <span className="font-mono text-[13px] text-ink truncate">{wasm.filename}</span>
+              </div>
+              {!submit && (
+                <button
+                  type="button"
+                  onClick={() => { setWasm(undefined); setLoadError(undefined); setConfirmDowngrade(false) }}
+                  className="text-[10px] font-mono tracking-[0.18em] uppercase text-mut hover:text-rose-ink transition-colors"
+                >
+                  clear
+                </button>
+              )}
             </div>
-            {!submit && (
-              <button
-                type="button"
-                onClick={() => {
-                  setWasm(undefined)
-                  setLoadError(undefined)
-                  setConfirmDowngrade(false)
-                }}
-                className="text-xs text-zinc-500 hover:text-rose-600 font-mono"
-              >
-                clear
-              </button>
-            )}
-          </div>
 
-          <dl className="grid grid-cols-3 gap-4 text-xs">
-            <div>
-              <dt className="uppercase tracking-wider text-zinc-500 mb-1">Size</dt>
-              <dd className="font-mono text-zinc-800">
-                {byteFmt.format(wasm.size)}
-                {' '}
-                B
-              </dd>
-            </div>
-            <div>
-              <dt className="uppercase tracking-wider text-zinc-500 mb-1">SHA-256</dt>
-              <dd className="font-mono text-zinc-800" title={wasm.sha256}>{shortHex(wasm.sha256)}</dd>
-            </div>
-            <div>
-              <dt className="uppercase tracking-wider text-zinc-500 mb-1">Inferred spec</dt>
-              <dd className="font-mono text-zinc-800">{wasm.inferredSpec}</dd>
-            </div>
-          </dl>
-
-          {wasm.inferredSpec === 'unknown' && (
-            <div className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2">
-              <span className="icon-[mdi--alert] mt-0.5 text-amber-600" />
+            <dl className="grid grid-cols-3 gap-6">
               <div>
-                Filename does not match
-                {' '}
-                <code className="font-mono">*_v2.*</code>
-                {' '}
-                or
-                {' '}
-                <code className="font-mono">*v2.compact*</code>
-                {' '}
-                — this might not actually upgrade the runtime. Continue at your own risk.
+                <dt className="label-tag mb-1.5">Size</dt>
+                <dd className="font-mono text-[13px] text-ink tabular-nums">{byteFmt.format(wasm.size)} <span className="text-mut">B</span></dd>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+              <div>
+                <dt className="label-tag mb-1.5">SHA-256</dt>
+                <dd className="font-mono text-[13px] text-ink truncate" title={wasm.sha256}>{shortHex(wasm.sha256)}</dd>
+              </div>
+              <div>
+                <dt className="label-tag mb-1.5">Inferred spec</dt>
+                <dd className="font-mono text-[13px] text-violet font-semibold">{wasm.inferredSpec}</dd>
+              </div>
+            </dl>
 
-      {wasm && (
-        <div className="bg-white border border-zinc-200 p-6 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="text-xs uppercase tracking-wider text-zinc-500">Pre-flight</div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div className="text-xs text-zinc-500 mb-1">Current</div>
-              <div className="font-mono text-zinc-900">
-                {version
-                  ? `spec=${version.spec} tx=${version.tx}`
-                  : 'connecting…'}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-zinc-500 mb-1">Target</div>
-              <div className="font-mono text-zinc-900">
-                spec=
-                {targetSpec}
-              </div>
-            </div>
-          </div>
-
-          {alreadyV2 && (
-            <div className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 space-y-2">
-              <div className="flex items-start gap-2">
-                <span className="icon-[mdi--alert] mt-0.5 text-amber-600" />
+            {wasm.inferredSpec === 'unknown' && (
+              <div className="mt-5 bg-amber-wash/60 border border-amber-ink/25 px-3 py-2.5 text-amber-ink text-[12px] flex items-start gap-2">
+                <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
                 <div>
-                  Chain is already on v2 — uploading again will downgrade or
-                  fail. Continue?
+                  Filename does not match <code className="font-mono">*_v2.*</code> or <code className="font-mono">*v2.compact*</code> —
+                  this might not upgrade the runtime. Continue at your own risk.
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={confirmDowngrade}
-                  onChange={e => setConfirmDowngrade(e.target.checked)}
-                  className="accent-emerald-600"
-                />
-                <span className="font-mono">I understand, proceed anyway</span>
-              </label>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </Card>
 
-      {wasm && (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            disabled={submitDisabled}
-            onClick={onSubmit}
-            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:bg-zinc-300 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
-          >
-            <span className="icon-[mdi--upload-outline]" />
-            Upgrade chain (sudo)
-          </button>
-          {submit?.error && (
-            <button
-              type="button"
-              onClick={reset}
-              className="px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 font-mono"
-            >
-              reset
-            </button>
-          )}
-        </div>
-      )}
-
-      {submit && (
-        <div className="bg-white border border-zinc-200 p-6 space-y-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="text-xs uppercase tracking-wider text-zinc-500">Progress</div>
-          <StatusTracker
-            steps={[
-              {
-                label: 'sudo extrinsic signed and submitted',
-                state: step1,
-              },
-              {
-                label: submit.blockNumber != null
-                  ? `set_code dispatched in block #${submit.blockNumber}`
-                  : 'set_code dispatched',
-                state: step2,
-                detail: submit.txHash ? `txHash ${shortHex(submit.txHash)}` : undefined,
-              },
-              {
-                label: submit.newSpec != null
-                  ? `runtime upgraded — spec_version ${submit.startSpec} → ${submit.newSpec}`
-                  : `runtime upgrading — spec_version ${submit.startSpec} → ?`,
-                state: step3,
-              },
-            ]}
-          />
-        </div>
-      )}
-
-      {submit?.error && (
-        <div className="border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 flex items-start gap-2">
-          <span className="icon-[mdi--alert] mt-0.5 text-rose-600" />
-          <div className="font-mono break-all">{submit.error}</div>
-        </div>
-      )}
-
-      {submit && step3 === 'done' && !submit.error && (
-        <div className="border border-emerald-200 bg-emerald-50 p-5 space-y-2">
-          <div className="flex items-center gap-2 text-emerald-700">
-            <span className="icon-[mdi--check-circle] text-xl" />
-            <span className="text-sm font-semibold">Runtime upgrade complete</span>
-          </div>
-          <div className="text-xs text-emerald-800 font-mono space-y-1">
-            <div>
-              spec_version =
-              {' '}
-              {submit.newSpec}
-            </div>
-            {elapsedMs != null && (
+          <Card label="Pre-flight" tag={`sudo //Alice`}>
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                elapsed =
-                {' '}
-                {byteFmt.format(elapsedMs)}
-                {' '}
-                ms
+                <div className="label-tag mb-1.5">Current</div>
+                <div className="font-mono text-[14px] text-ink tabular-nums">
+                  {version ? <>spec=<span className="text-ink">{version.spec}</span> · tx=<span className="text-ink">{version.tx}</span></> : 'connecting…'}
+                </div>
+              </div>
+              <div>
+                <div className="label-tag mb-1.5">Target</div>
+                <div className="font-mono text-[14px] text-violet font-semibold tabular-nums">spec={targetSpec}</div>
+              </div>
+            </div>
+
+            {alreadyV2 && (
+              <div className="mt-5 bg-amber-wash/60 border border-amber-ink/25 px-3 py-3 text-amber-ink text-[12px] space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
+                  <div>Chain is already on v2 — uploading again will downgrade or fail. Continue?</div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer pl-6">
+                  <input
+                    type="checkbox"
+                    checked={confirmDowngrade}
+                    onChange={e => setConfirmDowngrade(e.target.checked)}
+                    className="accent-violet"
+                  />
+                  <span className="font-mono text-[12px]">I understand, proceed anyway</span>
+                </label>
               </div>
             )}
+          </Card>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="violet"
+              size="lg"
+              busy={step1 === 'active'}
+              disabled={submitDisabled}
+              onClick={onSubmit}
+              iconLeft="icon-[mdi--rocket-launch-outline]"
+            >
+              Execute upgrade
+            </Button>
+            {submit?.error && (
+              <Button variant="ghost" onClick={reset} iconLeft="icon-[mdi--refresh]">Reset</Button>
+            )}
           </div>
-          <div className="text-xs text-emerald-700 pt-1">
-            Continue to PQ Send →
-          </div>
+
+          {submit && (
+            <Card label="Progress" tag={submit.txHash ? `txHash ${shortHex(submit.txHash)}` : undefined}>
+              <StatusTracker
+                steps={[
+                  { label: 'sudo extrinsic signed and submitted', state: step1 },
+                  {
+                    label: submit.blockNumber != null
+                      ? `set_code dispatched in block #${submit.blockNumber}`
+                      : 'set_code dispatched',
+                    state: step2,
+                    detail: submit.txHash ? `txHash ${shortHex(submit.txHash)}` : undefined,
+                  },
+                  {
+                    label: submit.newSpec != null
+                      ? `runtime upgraded — spec_version ${submit.startSpec} → ${submit.newSpec}`
+                      : `runtime upgrading — spec_version ${submit.startSpec} → ?`,
+                    state: step3,
+                  },
+                ]}
+              />
+            </Card>
+          )}
+
+          {submit?.error && (
+            <div className="bg-rose-wash/50 border border-rose-ink/20 px-4 py-3 text-rose-ink text-[12px] font-mono break-all flex items-start gap-2">
+              <span className="icon-[mdi--alert-circle] mt-0.5 shrink-0" />
+              <div>{submit.error}</div>
+            </div>
+          )}
+
+          {submit && step3 === 'done' && !submit.error && (
+            <div className="relative bg-violet/[0.06] border border-violet/30 px-7 py-6 overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-violet/15 blur-3xl pointer-events-none" />
+              <div className="relative">
+                <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet mb-2">runtime upgrade complete</div>
+                <h3 className="text-[28px] tracking-[-0.02em] font-semibold text-ink">
+                  QuantumLeap is now{' '}
+                  <span className="italic-display violet-highlight">post-quantum.</span>
+                </h3>
+                <div className="mt-4 grid grid-cols-3 gap-6 font-mono text-[12px] text-ink/80">
+                  <div>
+                    <div className="label-tag mb-1">spec_version</div>
+                    <div className="text-violet font-semibold text-[15px]">{submit.newSpec}</div>
+                  </div>
+                  <div>
+                    <div className="label-tag mb-1">elapsed</div>
+                    <div className="text-ink text-[15px]">{elapsedMs != null ? `${byteFmt.format(elapsedMs)} ms` : '—'}</div>
+                  </div>
+                  <div>
+                    <div className="label-tag mb-1">classical transfers</div>
+                    <div className="text-ink text-[15px]">CallFiltered</div>
+                  </div>
+                </div>
+                <div className="mt-5 inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet">
+                  Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Leap</span>
+                  <span className="icon-[mdi--arrow-right] text-base" />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </StageLayout>
   )
 }

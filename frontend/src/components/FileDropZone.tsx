@@ -13,7 +13,7 @@ export default function FileDropZone({
   onFile,
   disabled = false,
   label = 'Drop runtime WASM here',
-  hint = 'or click to browse',
+  hint = 'or click to browse (.wasm only)',
 }: FileDropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -25,13 +25,11 @@ export default function FileDropZone({
     onFile(f)
   }
 
-  const baseClasses
-    = 'border-2 border-dashed p-12 text-center transition-colors cursor-pointer select-none'
-  const stateClasses = disabled
-    ? 'border-zinc-200 bg-zinc-50/50 cursor-not-allowed opacity-60'
+  const state = disabled
+    ? 'border-rule bg-white/30 cursor-not-allowed opacity-50'
     : dragOver
-      ? 'border-emerald-500 bg-emerald-50/50'
-      : 'border-zinc-300 bg-zinc-50 hover:border-emerald-400 hover:bg-emerald-50/30'
+      ? 'border-violet bg-violet/[0.06] scale-[1.005]'
+      : 'border-rule-strong bg-white/60 hover:border-violet/60 hover:bg-violet/[0.03]'
 
   return (
     <div
@@ -48,22 +46,15 @@ export default function FileDropZone({
           inputRef.current?.click()
         }
       }}
-      onDragOver={(e) => {
-        e.preventDefault()
-        if (disabled) return
-        setDragOver(true)
-      }}
-      onDragLeave={(e) => {
-        e.preventDefault()
-        setDragOver(false)
-      }}
+      onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true) }}
+      onDragLeave={(e) => { e.preventDefault(); setDragOver(false) }}
       onDrop={(e) => {
         e.preventDefault()
         setDragOver(false)
         if (disabled) return
         handleFiles(e.dataTransfer.files)
       }}
-      className={`${baseClasses} ${stateClasses}`}
+      className={`relative border-2 border-dashed transition-all duration-300 p-14 text-center cursor-pointer select-none ${state}`}
     >
       <input
         ref={inputRef}
@@ -73,9 +64,12 @@ export default function FileDropZone({
         onChange={e => handleFiles(e.target.files)}
         disabled={disabled}
       />
-      <span className="icon-[mdi--upload-outline] text-4xl text-zinc-400 block mx-auto mb-3" />
-      <div className="text-sm font-medium text-zinc-700">{label}</div>
-      <div className="text-xs text-zinc-500 font-mono mt-1">{hint}</div>
+      <div className={`relative inline-flex items-center justify-center w-14 h-14 mb-4 ${dragOver ? 'dz-glow' : ''}`}>
+        <div className="absolute inset-0 rounded-full bg-violet/[0.10]" />
+        <span className={`relative icon-[mdi--upload-outline] text-3xl ${dragOver ? 'text-violet' : 'text-ink/60'}`} />
+      </div>
+      <div className="text-[15px] font-medium text-ink">{label}</div>
+      <div className="text-[12px] text-mut font-mono mt-1.5">{hint}</div>
     </div>
   )
 }

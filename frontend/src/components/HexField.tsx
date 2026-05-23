@@ -26,35 +26,33 @@ export default function HexField({ label, value, full, head = 6, tail = 6, byteL
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs uppercase tracking-wider text-zinc-500">{label}</span>
-        {byteLen != null && (
-          <span className="text-[10px] text-zinc-400 font-mono">
-            {byteLen}
-            {' '}
-            B
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-3 py-2 font-mono text-xs text-zinc-800">
-        <code className="truncate flex-1">{display}</code>
+      {label && (
+        <div className="flex items-baseline justify-between mb-1.5">
+          <span className="label-tag">{label}</span>
+          {byteLen != null && (
+            <span className="text-[10px] font-mono text-mut-2 tabular-nums">{byteLen} B</span>
+          )}
+        </div>
+      )}
+      <div className="group flex items-center gap-2 bg-white/70 border border-rule px-3 py-2.5 font-mono text-[11.5px] text-ink hover:border-rule-strong transition-colors">
+        <code className="truncate flex-1 select-all">{display}</code>
         {!full && (
           <button
             type="button"
             onClick={() => setShow(s => !s)}
-            className="text-zinc-400 hover:text-zinc-700"
+            className="text-mut hover:text-violet transition-colors"
             title={show ? 'collapse' : 'expand'}
           >
-            <span className={show ? 'icon-[mdi--chevron-up]' : 'icon-[mdi--chevron-down]'} />
+            <span className={`${show ? 'icon-[mdi--chevron-up]' : 'icon-[mdi--chevron-down]'} text-base`} />
           </button>
         )}
         <button
           type="button"
           onClick={copy}
-          className="text-zinc-400 hover:text-emerald-600"
+          className="text-mut hover:text-violet transition-colors"
           title="copy"
         >
-          <span className={copied ? 'icon-[mdi--check]' : 'icon-[mdi--content-copy]'} />
+          <span className={`${copied ? 'icon-[mdi--check]' : 'icon-[mdi--content-copy]'} text-[15px]`} />
         </button>
       </div>
     </div>
