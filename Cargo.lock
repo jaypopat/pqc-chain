@@ -10026,6 +10026,7 @@ dependencies = [
  "fips204",
  "hex",
  "parity-scale-codec",
+ "pq-crypto",
  "serde",
  "serde_json",
  "sp-core",

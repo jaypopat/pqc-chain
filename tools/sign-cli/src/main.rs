@@ -99,14 +99,55 @@ fn cmd_commit_hash(pk: &str) -> anyhow::Result<()> {
 }
 
 fn cmd_sign_transfer(
-    _sk: &str,
-    _from: &str,
-    _to: &str,
-    _amount: u128,
-    _nonce: u64,
-    _chain_id: u32,
-    _spec_version: u32,
-    _out: &str,
+    sk_path: &str,
+    from_hex: &str,
+    to_hex: &str,
+    amount: u128,
+    nonce: u64,
+    chain_id: u32,
+    spec_version: u32,
+    out: &str,
 ) -> anyhow::Result<()> {
-    todo!()
+    use codec::Encode;
+    use fips204::ml_dsa_44;
+    use fips204::traits::{SerDes, Signer};
+
+    let kp: Keypair = serde_json::from_str(&std::fs::read_to_string(sk_path)?)?;
+    let sk_bytes: [u8; ml_dsa_44::SK_LEN] = hex::decode(&kp.sk_hex)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("sk wrong length"))?;
+    let pk_bytes: [u8; 1312] = hex::decode(&kp.pk_hex)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("pk wrong length"))?;
+    let sk = ml_dsa_44::PrivateKey::try_from_bytes(sk_bytes)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    // AccountId = sp_core::crypto::AccountId32 = [u8;32]
+    let from_bytes: [u8; 32] = hex::decode(from_hex)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("from must be 32 bytes hex"))?;
+    let to_bytes: [u8; 32] = hex::decode(to_hex)?
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("to must be 32 bytes hex"))?;
+    let from = sp_core::crypto::AccountId32::from(from_bytes);
+    let to = sp_core::crypto::AccountId32::from(to_bytes);
+
+    let domain: &[u8] = b"QL_PQ_TRANSFER_V1";
+    let payload = (domain, chain_id, spec_version, &from, &to, amount, nonce).encode();
+    let sig = sk
+        .try_sign(&payload, &[])
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    let out_obj = SignedTransfer {
+        from: from_hex.to_string(),
+        to: to_hex.to_string(),
+        amount,
+        nonce,
+        pubkey_hex: hex::encode(pk_bytes),
+        sig_hex: hex::encode(sig),
+        msg_hex: hex::encode(&payload),
+    };
+    std::fs::write(out, serde_json::to_string_pretty(&out_obj)?)?;
+    println!("wrote {out}");
+    Ok(())
 }
