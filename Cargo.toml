@@ -1,0 +1,27 @@
+[profile.release]
+panic = "unwind"
+
+[workspace.package]
+authors = ["R0GUE <go@r0gue.io>"]
+edition = "2021"
+homepage = "https://r0gue.io"
+license = "Unlicense"
+repository = "https://github.com/r0gue-io/base-parachain"
+
+[workspace]
+members = ["runtime"]
+resolver = "2"
+
+[workspace.dependencies]
+codec = { package = "parity-scale-codec", version = "3.7.5", default-features = false, features = ["derive"] }
+docify = "0.4.1"
+log = { version = "0.4.25", default-features = false }
+scale-info = { version = "2.11.6", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.137", features = ["alloc"], default-features = false }
+smallvec = "1.13.2"
+cumulus-pallet-parachain-system = { version = "0.25.0", default-features = false }
+
+# Build
+substrate-wasm-builder = "29.0.0"
+
+polkadot-sdk = { version = "2512.0.0", default-features = false }

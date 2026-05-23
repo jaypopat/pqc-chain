@@ -1,0 +1,88 @@
+name: "release"
+
+env:
+  SUBWASM_VERSION: 0.18.0
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or commit to build from"
+        required: true
+        default: "main"
+      release_name:
+        description: "Name of the new release (e.g. Polkadot stable2412)"
+        required: true
+      release_tag:
+        description: "Tag of the new release (e.g. polkadot-stable2412)"
+        required: true
+
+jobs:
+  build-runtime:
+    # Runtime compiles to WASM (platform-independent), so we only need one build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    env:
+      package: "parachain-template-runtime.tar.gz"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Add WASM target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build runtime
+        run: cargo build --release -p parachain-template-runtime
+
+      - name: Package runtime WASM
+        run: |
+          mkdir -p artifacts
+          # Copy the compressed WASM runtime blob
+          cp target/release/wbuild/parachain-template-runtime/parachain_template_runtime.compact.compressed.wasm artifacts/
+          # Also include the regular WASM for reference
+          cp target/release/wbuild/parachain-template-runtime/parachain_template_runtime.wasm artifacts/
+          cd artifacts
+          # Generate checksums
+          sha256sum parachain_template_runtime.compact.compressed.wasm > parachain_template_runtime.compact.compressed.wasm.sha256
+          sha256sum parachain_template_runtime.wasm > parachain_template_runtime.wasm.sha256
+          # Create tarball
+          tar -czf ${{ env.package }} parachain_template_runtime.compact.compressed.wasm parachain_template_runtime.wasm *.sha256
+
+      - name: Upload runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: parachain-template-runtime
+          path: artifacts/${{ env.package }}
+
+  create-release:
+    needs: build-runtime
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          name: "${{ github.event.inputs.release_name }}"
+          target_commitish: ${{ github.event.inputs.ref }}
+          generate_release_notes: true
+          body: "This release contains the parachain runtime compiled to WASM.\n\n**Included files:**\n- `parachain_template_runtime.compact.compressed.wasm` - Compressed runtime blob for on-chain upgrades\n- `parachain_template_runtime.wasm` - Uncompressed runtime\n- SHA256 checksums for verification\n\nThe runtime is platform-independent and can be used on any system running a compatible Polkadot parachain node."
+          files: |
+            release-artifacts/**/*.tar.gz
