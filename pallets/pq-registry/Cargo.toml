@@ -1,6 +1,6 @@
 [package]
 name = "pallet-pq-registry"
-description = "Registry of hash-commitments to future post-quantum public keys."
+description = "QuantumLeap PQ commitment registry pallet."
 version = "0.1.0"
 license = "Unlicense"
 authors.workspace = true
@@ -17,26 +17,28 @@ workspace = true
 
 [dependencies]
 codec = { features = ["derive"], workspace = true }
-scale-info = { features = ["derive"], workspace = true }
+frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+scale-info = { features = ["derive"], workspace = true }
 sp-core.workspace = true
-sp-runtime.workspace = true
 
 [dev-dependencies]
-sp-io = { workspace = true, default-features = true }
+sp-io = { default-features = true, workspace = true }
+sp-runtime = { default-features = true, workspace = true }
 
 [features]
 default = ["std"]
 std = [
 	"codec/std",
-	"scale-info/std",
+	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
+	"scale-info/std",
 	"sp-core/std",
-	"sp-runtime/std",
 ]
 runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",

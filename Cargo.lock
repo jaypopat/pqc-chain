@@ -6358,6 +6358,7 @@ dependencies = [
 name = "pallet-pq-registry"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -7722,6 +7723,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-pq-registry",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",

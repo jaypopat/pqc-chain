@@ -1,3 +1,47 @@
 use crate::{mock::*, *};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
+
+#[test]
+fn commit_stores_hash_and_emits_event() {
+	new_test_ext().execute_with(|| {
+		let h = H256::from([7u8; 32]);
+		assert_ok!(PqRegistry::commit(RuntimeOrigin::signed(1), h));
+		assert_eq!(Commitment::<Test>::get(&1), Some(h));
+		System::assert_last_event(Event::Committed { who: 1, hash: h }.into());
+	});
+}
+
+#[test]
+fn commit_twice_fails() {
+	new_test_ext().execute_with(|| {
+		let h = H256::from([7u8; 32]);
+		assert_ok!(PqRegistry::commit(RuntimeOrigin::signed(1), h));
+		assert_noop!(
+			PqRegistry::commit(RuntimeOrigin::signed(1), H256::from([9u8; 32])),
+			Error::<Test>::AlreadyCommitted
+		);
+	});
+}
+
+#[test]
+fn recommit_replaces_hash_and_emits_event() {
+	new_test_ext().execute_with(|| {
+		let h1 = H256::from([1u8; 32]);
+		let h2 = H256::from([2u8; 32]);
+		assert_ok!(PqRegistry::commit(RuntimeOrigin::signed(1), h1));
+		assert_ok!(PqRegistry::recommit(RuntimeOrigin::signed(1), h2));
+		assert_eq!(Commitment::<Test>::get(&1), Some(h2));
+		System::assert_last_event(Event::Recommitted { who: 1, new_hash: h2 }.into());
+	});
+}
+
+#[test]
+fn recommit_without_prior_commit_fails() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			PqRegistry::recommit(RuntimeOrigin::signed(1), H256::from([2u8; 32])),
+			Error::<Test>::NotCommitted
+		);
+	});
+}
