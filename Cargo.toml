@@ -12,10 +12,9 @@ members = [
     "pallets/pq-registry",
     "pallets/pq-wallet",
     "runtime/v1",
+    "runtime/v2",
     "primitives/pq-crypto",
     "tools/sign-cli",
-    # Future members (uncomment when created):
-    # "runtime/v2",
 ]
 resolver = "2"
 
@@ -60,6 +59,7 @@ zero-prefixed-literal = { level = "allow", priority = 2 }            # 00_1000_0
 
 [workspace.dependencies]
 quantumleap-runtime-v1 = { path = "./runtime/v1", default-features = false }
+quantumleap-runtime-v2 = { path = "./runtime/v2", default-features = false }
 pallet-template = { path = "./pallets/template", default-features = false }
 pallet-pq-registry = { path = "./pallets/pq-registry", default-features = false }
 pallet-pq-wallet = { path = "./pallets/pq-wallet", default-features = false }
