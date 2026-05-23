@@ -14,10 +14,14 @@ workspace = true
 [dependencies]
 sp-runtime-interface = { workspace = true }
 sp-io = { workspace = true }
-sp-std = { workspace = true }
 sp-core = { workspace = true }
 # `fips204` is std-only; never compiled into the WASM runtime blob.
 fips204 = { version = "0.4.6", optional = true }
+
+[dev-dependencies]
+fips204 = { version = "0.4.6", features = ["ml-dsa-44", "default-rng"] }
+sp-io = { workspace = true, default-features = false, features = ["std"] }
+sp-core = { workspace = true, default-features = false, features = ["std"] }
 
 [features]
 default = ["std"]
@@ -25,6 +29,5 @@ std = [
     "dep:fips204",
     "sp-runtime-interface/std",
     "sp-io/std",
-    "sp-std/std",
     "sp-core/std",
 ]
