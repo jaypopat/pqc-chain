@@ -1,48 +1,25 @@
-import AccountCard from './components/AccountCard'
+import type { Tab } from './components/Nav'
+import { useState } from 'react'
 import Footer from './components/Footer'
 import Header from './components/Header'
-import { useConnect } from './hooks/useConnect'
-import { unifyAddress } from './utils/formatters'
-import { chainKeys } from './utils/sdk'
+import Commit from './pages/Commit'
+import Home from './pages/Home'
+import PqSend from './pages/PqSend'
+import Upgrade from './pages/Upgrade'
 
-function App() {
-  const { selectedAccount } = useConnect()
+export default function App() {
+  const [tab, setTab] = useState<Tab>('home')
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
-      <Header />
-
-      {/* Hero Section */}
-      <section className="bg-white py-16 hidden sm:block">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            <span>App Starter</span>
-          </h1>
-          <p className="text-xl text-gray-600 font-mono flex items-center justify-center gap-2">
-            <span>Powered by</span>
-            <span className="icon-[token-branded--polkadot] animate-spin" style={{ animationDuration: '16s' }} />
-          </p>
-        </div>
-      </section>
-
-      {/* Account Cards */}
-      <main className="container mx-auto py-8 space-y-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-          {chainKeys.map(chainKey => (
-            <div key={chainKey}>
-              <AccountCard
-                key={chainKey}
-                chainKey={chainKey}
-                address={selectedAccount?.address ? unifyAddress(selectedAccount.address) : undefined}
-              />
-            </div>
-          ))}
-        </div>
+    <div className="min-h-screen flex flex-col bg-zinc-50">
+      <Header tab={tab} setTab={setTab} />
+      <main className="flex-1">
+        {tab === 'home' && <Home goto={setTab} />}
+        {tab === 'commit' && <Commit />}
+        {tab === 'upgrade' && <Upgrade />}
+        {tab === 'pq-send' && <PqSend />}
       </main>
-
       <Footer />
     </div>
   )
 }
-
-export default App

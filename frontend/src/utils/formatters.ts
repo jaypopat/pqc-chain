@@ -1,12 +1,4 @@
-import type { Prefix } from '../utils/sdk'
 import { AccountId } from 'polkadot-api'
-
-const subscan: Record<Prefix, string> = {
-  dot: 'https://polkadot.subscan.io',
-  dot_asset_hub: 'https://assethub-polkadot.subscan.io',
-  pas: 'https://paseo.subscan.io',
-  pas_asset_hub: 'https://assethub-paseo.subscan.io',
-}
 
 export function unifyAddress(address: string) {
   const addressCodec = AccountId(0)
@@ -18,36 +10,37 @@ export function stripAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`
 }
 
-export function explorerAccount(chain: Prefix, address?: string): string {
-  const url = new URL(subscan[chain])
-  url.pathname = `/account/${address || ''}`
-
-  return url.toString()
+export function shortHex(hex: string, head = 6, tail = 4): string {
+  const h = hex.startsWith('0x') ? hex : `0x${hex}`
+  if (h.length <= head + tail + 2) return h
+  return `${h.slice(0, head + 2)}…${h.slice(-tail)}`
 }
 
-export function explorerDetail(chain: Prefix, hash: string): string {
-  const url = new URL(subscan[chain])
-  url.pathname = `/extrinsic/${hash}`
-
-  return url.toString()
+export function toHex(bytes: Uint8Array): string {
+  let s = '0x'
+  for (let i = 0; i < bytes.length; i++) {
+    s += bytes[i]!.toString(16).padStart(2, '0')
+  }
+  return s
 }
 
-export function buyTokenUrl(chainKey: Prefix, address?: string) {
-  if (chainKey === 'dot' || chainKey === 'dot_asset_hub') {
-    const url = new URL('https://checkout.banxa.com')
-    url.searchParams.set('coinType', 'DOT')
-    url.searchParams.set('blockchain', 'DOT')
-    url.searchParams.set('walletAddress', address || '')
-    url.searchParams.set('orderType', 'BUY')
-
-    return url.toString()
+export function fromHex(hex: string): Uint8Array {
+  const h = hex.startsWith('0x') ? hex.slice(2) : hex
+  if (h.length % 2 !== 0) throw new Error('odd-length hex')
+  const out = new Uint8Array(h.length / 2)
+  for (let i = 0; i < out.length; i++) {
+    out[i] = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16)
   }
+  return out
+}
 
-  const faucetUrl = new URL('https://faucet.polkadot.io/')
-
-  if (chainKey === 'pas_asset_hub') {
-    faucetUrl.searchParams.set('parachain', '1000')
-  }
-
-  return faucetUrl.toString()
+export function planckToUnit(plancks: bigint, decimals = 12): string {
+  const neg = plancks < 0n
+  const abs = neg ? -plancks : plancks
+  const base = 10n ** BigInt(decimals)
+  const whole = abs / base
+  const frac = abs % base
+  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '')
+  const body = fracStr.length ? `${whole}.${fracStr}` : whole.toString()
+  return neg ? `-${body}` : body
 }

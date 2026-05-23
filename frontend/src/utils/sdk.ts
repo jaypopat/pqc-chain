@@ -3,24 +3,12 @@ import { createAtom } from '@xstate/store'
 import { createClient } from 'polkadot-api'
 import { withPolkadotSdkCompat } from 'polkadot-api/polkadot-sdk-compat'
 import { getWsProvider } from 'polkadot-api/ws-provider'
-import { dot, dot_asset_hub, pas, pas_asset_hub } from '../descriptors'
+import { ql } from '../descriptors'
 
 const config = {
-  dot: {
-    descriptor: dot,
-    providers: ['wss://dot-rpc.stakeworld.io'],
-  },
-  dot_asset_hub: {
-    descriptor: dot_asset_hub,
-    providers: ['wss://dot-rpc.stakeworld.io/assethub'],
-  },
-  pas: {
-    descriptor: pas,
-    providers: ['wss://pas-rpc.stakeworld.io'],
-  },
-  pas_asset_hub: {
-    descriptor: pas_asset_hub,
-    providers: ['wss://pas-rpc.stakeworld.io/assethub'],
+  ql: {
+    descriptor: ql,
+    providers: ['ws://127.0.0.1:9944'],
   },
 } as const
 
