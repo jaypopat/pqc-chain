@@ -169,3 +169,7 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }
+
+impl pallet_pq_registry::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
