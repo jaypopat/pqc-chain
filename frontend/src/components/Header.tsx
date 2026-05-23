@@ -1,21 +1,35 @@
+import type { Tab } from './Nav'
 import Connect from './Connect'
+import Nav from './Nav'
+import SpecBanner from './SpecBanner'
 
-export default function Header() {
+interface HeaderProps {
+  tab: Tab
+  setTab: (t: Tab) => void
+}
+
+export default function Header({ tab, setTab }: HeaderProps) {
+  const showWallet = tab !== 'upgrade'
+
   return (
-    <div className="navbar bg-base-100 border-b border-gray-200">
-      <div className="container mx-auto flex items-center">
-        <div className="navbar-start">
-          <a href="https://polkadot.com" target="_blank" className="flex items-center" rel="noopener noreferrer">
-            <span className="icon-[token-branded--polkadot] text-2xl" />
-            <span className="text-xl font-bold font-mono text-black tracking-wide ml-1">
-              Dapp
-            </span>
-          </a>
+    <header className="border-b border-zinc-200 bg-white">
+      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+        <div className="flex items-center gap-2">
+          <span className="icon-[mdi--atom] text-2xl text-emerald-600" />
+          <span className="text-lg font-semibold tracking-tight text-zinc-950">
+            QuantumLeap
+          </span>
         </div>
-        <div className="navbar-end">
-          <Connect />
+
+        <Nav tab={tab} setTab={setTab} />
+
+        <div className="flex items-center gap-3">
+          <SpecBanner />
+          <div className={showWallet ? '' : 'invisible'}>
+            <Connect />
+          </div>
         </div>
       </div>
-    </div>
+    </header>
   )
 }

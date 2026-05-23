@@ -1,15 +1,10 @@
 export default function Footer() {
   return (
-    <footer className="footer footer-center bg-base-200 text-base-content p-4">
-      <aside className="flex items-center gap-4">
-        <p>Copyright © 2025</p>
-        <a href="https://x.com/polkadot" target="_blank" rel="noopener noreferrer" className="size-5 text-gray-600 hover:text-gray-900 transition-colors">
-          <span className="icon-[mdi--twitter] size-5" />
-        </a>
-        <a href="https://github.com/preschian/create-dot-app" target="_blank" rel="noopener noreferrer" className="size-5 text-gray-600 hover:text-gray-900 transition-colors">
-          <span className="icon-[mdi--github] size-5" />
-        </a>
-      </aside>
+    <footer className="border-t border-zinc-200 bg-white">
+      <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-zinc-500 font-mono">
+        <span>QuantumLeap · forkless ECDSA → ML-DSA · Substrate solochain</span>
+        <span>2026-05</span>
+      </div>
     </footer>
   )
 }
