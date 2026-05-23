@@ -43,7 +43,8 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
   const [revealSk, setRevealSk] = useState(false)
 
   const local = useMemo(() => {
-    if (!keypair) return null
+    if (!keypair)
+      return null
     try {
       const pk = fromHex(keypair.pk_hex)
       const hashHex = commitmentHashHex(pk)
@@ -53,12 +54,18 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
   }, [keypair])
 
   const refreshOnChain = useCallback(async () => {
-    if (!selectedAccount) { setOnChain({ kind: 'none' }); return }
+    if (!selectedAccount) {
+      setOnChain({ kind: 'none' })
+      return
+    }
     setOnChain({ kind: 'loading' })
     try {
       const addr = unifyAddress(selectedAccount.address)
       const stored = await api.query.PqRegistry.Commitment.getValue(addr)
-      if (!stored) { setOnChain({ kind: 'none' }); return }
+      if (!stored) {
+        setOnChain({ kind: 'none' })
+        return
+      }
       setOnChain({ kind: 'present', hashHex: stored.asHex() })
     }
     catch (err) {
@@ -66,7 +73,9 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
     }
   }, [api, selectedAccount])
 
-  useEffect(() => { refreshOnChain() }, [refreshOnChain])
+  useEffect(() => {
+    refreshOnChain()
+  }, [refreshOnChain])
 
   const alreadyCommitted = onChain.kind === 'present'
   const matches = alreadyCommitted && local && onChain.hashHex.toLowerCase() === local.hashHex.toLowerCase()
@@ -77,7 +86,8 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
   }
 
   async function handleSubmit() {
-    if (!selectedAccount || !keypair || !local || submitting) return
+    if (!selectedAccount || !keypair || !local || submitting)
+      return
 
     setSubmitError(null)
     setSubmitResult(null)
@@ -93,7 +103,8 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
     let sub: Subscription | null = null
     try {
       const signer = await polkadotSigner()
-      if (!signer) throw new Error('No signer available for the selected account')
+      if (!signer)
+        throw new Error('No signer available for the selected account')
 
       const hashBytes = commitmentHash(local.pk)
       const hashBinary = Binary.fromBytes(hashBytes)
@@ -161,7 +172,8 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
       setSteps(prev => prev.map(s => s.state === 'active' ? { ...s, state: 'error', detail: message } : s))
       setSubmitError(message)
       setSubmitting(false)
-      if (sub) sub.unsubscribe()
+      if (sub)
+        sub.unsubscribe()
     }
   }
 
@@ -182,8 +194,10 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
               <div>
                 <div className="text-[14px] font-medium text-ink mb-1">No wallet connected</div>
                 <div className="text-[13px] text-ink/70">
-                  Click{' '}
-                  <span className="font-mono tracking-[0.12em] text-violet uppercase text-[11px] border border-violet/30 px-1.5 py-0.5">Connect</span>{' '}
+                  Click
+                  {' '}
+                  <span className="font-mono tracking-[0.12em] text-violet uppercase text-[11px] border border-violet/30 px-1.5 py-0.5">Connect</span>
+                  {' '}
                   in the header to choose a Talisman account.
                 </div>
               </div>
@@ -296,8 +310,10 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
             >
               <div className="flex items-end justify-between gap-4 flex-wrap">
                 <div className="text-[13px] text-ink/75 max-w-[42ch]">
-                  Submit the commitment, signed with{' '}
-                  <span className="font-mono text-ink">{selectedAccount.name}</span>'s
+                  Submit the commitment, signed with
+                  {' '}
+                  <span className="font-mono text-ink">{selectedAccount.name}</span>
+                  's
                   classical key.
                 </div>
                 <Button
@@ -331,7 +347,13 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
                   <div className="flex items-baseline gap-2 text-ink">
                     <span className="icon-[mdi--check-circle] text-violet text-lg self-center" />
                     <span className="text-[14px] font-medium">
-                      {submitResult.recommit ? 'Re-commit' : 'Commit'} finalized in block <span className="font-mono">#{submitResult.blockNumber}</span>
+                      {submitResult.recommit ? 'Re-commit' : 'Commit'}
+                      {' '}
+                      finalized in block
+                      <span className="font-mono">
+                        #
+                        {submitResult.blockNumber}
+                      </span>
                     </span>
                   </div>
                   <HexField label="Block hash" value={submitResult.blockHash} byteLen={32} />
@@ -341,7 +363,9 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
                     onClick={() => goto('upgrade')}
                     className="group inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet hover:text-ink transition-colors focus:outline-none"
                   >
-                    Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Upgrade</span>
+                    Continue to
+                    {' '}
+                    <span className="italic-display normal-case tracking-normal text-[14px]">Upgrade</span>
                     <span className="icon-[mdi--arrow-right] text-base transition-transform group-hover:translate-x-1" />
                   </button>
                 </div>
@@ -358,7 +382,9 @@ export default function Commit({ goto }: { goto: (t: Tab) => void }) {
                 regenerate keypair
               </button>
               <span>
-                account · <span className="text-ink/70">{shortHex(unifyAddress(selectedAccount.address), 6, 6)}</span>
+                account ·
+                {' '}
+                <span className="text-ink/70">{shortHex(unifyAddress(selectedAccount.address), 6, 6)}</span>
               </span>
             </div>
           </>

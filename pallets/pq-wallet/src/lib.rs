@@ -3,14 +3,11 @@
 //! Lazy-reveal post-quantum wallet. In runtime v2 (after the forkless upgrade)
 //! this pallet exposes a single unsigned extrinsic, `pq_transfer`, that:
 //!
-//! 1. On first use for an account, verifies the supplied `pq_pubkey` matches
-//!    the previously stored commitment in `pallet-pq-registry`, and caches
-//!    the pubkey in `Revealed`.
-//! 2. On subsequent uses, requires the supplied pubkey to match the cached
-//!    one exactly.
-//! 3. Verifies the ML-DSA-44 signature over a domain-separated, canonical
-//!    encoding of `(domain, chain_id, spec_version, from, to, amount, nonce)`
-//!    using the `pq-crypto` host function.
+//! 1. On first use for an account, verifies the supplied `pq_pubkey` matches the previously stored
+//!    commitment in `pallet-pq-registry`, and caches the pubkey in `Revealed`.
+//! 2. On subsequent uses, requires the supplied pubkey to match the cached one exactly.
+//! 3. Verifies the ML-DSA-44 signature over a domain-separated, canonical encoding of `(domain,
+//!    chain_id, spec_version, from, to, amount, nonce)` using the `pq-crypto` host function.
 //! 4. Increments the per-account nonce and executes the balance transfer.
 //!
 //! See `docs/superpowers/specs/2026-05-23-quantumleap-design.md` §4.3 for the
@@ -63,10 +60,12 @@ pub fn encode_transfer_msg<T: Config>(
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{BalanceOf, encode_transfer_msg};
-	use frame_support::pallet_prelude::*;
-	use frame_support::traits::{Currency, ExistenceRequirement, Get};
-	use frame_support::unsigned::ValidateUnsigned;
+	use super::{encode_transfer_msg, BalanceOf};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, ExistenceRequirement, Get},
+		unsigned::ValidateUnsigned,
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, ValidTransaction,
@@ -76,8 +75,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_pq_registry::Config {
 		/// The overarching runtime event type.
 		#[allow(deprecated)]
-		type RuntimeEvent: From<Event<Self>>
-			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The currency used to settle `pq_transfer`s.
 		type Currency: Currency<Self::AccountId>;
@@ -91,18 +89,12 @@ pub mod pallet {
 
 	/// Cached ML-DSA-44 public key per account, populated on first `pq_transfer`.
 	#[pallet::storage]
-	pub type Revealed<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		BoundedVec<u8, ConstU32<1312>>,
-		OptionQuery,
-	>;
+	pub type Revealed<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BoundedVec<u8, ConstU32<1312>>, OptionQuery>;
 
 	/// Replay-protection nonce; incremented after each successful `pq_transfer`.
 	#[pallet::storage]
-	pub type Nonce<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, u64, ValueQuery>;
+	pub type Nonce<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, u64, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -173,10 +165,7 @@ pub mod pallet {
 
 			// 3. Signature (host fn).
 			let msg = encode_transfer_msg::<T>(&from, &to, amount, nonce);
-			ensure!(
-				pq_crypto::pq_crypto::verify(&pq_pubkey, &sig, &msg),
-				Error::<T>::BadSignature,
-			);
+			ensure!(pq_crypto::pq_crypto::verify(&pq_pubkey, &sig, &msg), Error::<T>::BadSignature,);
 
 			// 4. State mutation.
 			Nonce::<T>::insert(&from, nonce + 1);
@@ -190,10 +179,7 @@ pub mod pallet {
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
 		type Call = Call<T>;
 
-		fn validate_unsigned(
-			_source: TransactionSource,
-			call: &Self::Call,
-		) -> TransactionValidity {
+		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			let Call::pq_transfer { from, to, amount, nonce, pq_pubkey, sig } = call else {
 				return InvalidTransaction::Call.into();
 			};

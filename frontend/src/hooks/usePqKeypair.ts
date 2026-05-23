@@ -11,9 +11,11 @@ export interface StoredPqKey {
 function read(): StoredPqKey | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+    if (!raw)
+      return null
     const parsed = JSON.parse(raw) as StoredPqKey
-    if (!parsed.pk_hex || !parsed.sk_hex) return null
+    if (!parsed.pk_hex || !parsed.sk_hex)
+      return null
     return parsed
   }
   catch {
@@ -26,7 +28,8 @@ export function usePqKeypair() {
 
   useEffect(() => {
     function onStorage(e: StorageEvent) {
-      if (e.key === STORAGE_KEY) setKeypair(read())
+      if (e.key === STORAGE_KEY)
+        setKeypair(read())
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)

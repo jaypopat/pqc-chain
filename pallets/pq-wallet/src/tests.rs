@@ -1,9 +1,9 @@
 use crate::{mock::*, *};
-use fips204::ml_dsa_44;
-use fips204::traits::{SerDes, Signer};
-use frame_support::pallet_prelude::*;
-use frame_support::unsigned::ValidateUnsigned;
-use frame_support::{assert_noop, assert_ok};
+use fips204::{
+	ml_dsa_44,
+	traits::{SerDes, Signer},
+};
+use frame_support::{assert_noop, assert_ok, pallet_prelude::*, unsigned::ValidateUnsigned};
 use sp_runtime::transaction_validity::TransactionSource;
 
 /// Helper: generate a keypair and commit its `commitment_hash` for `account`.
@@ -199,8 +199,7 @@ fn encode_transfer_msg_is_stable() {
 fn validate_unsigned_rejects_unsigned_with_no_commitment() {
 	new_test_ext().execute_with(|| {
 		let (pk, sk) = ml_dsa_44::try_keygen().unwrap();
-		let pk_bytes: BoundedVec<u8, ConstU32<1312>> =
-			pk.into_bytes().to_vec().try_into().unwrap();
+		let pk_bytes: BoundedVec<u8, ConstU32<1312>> = pk.into_bytes().to_vec().try_into().unwrap();
 		let msg = encode_transfer_msg::<Test>(&1, &2, 10, 0);
 		let sig: BoundedVec<u8, ConstU32<2420>> =
 			sk.try_sign(&msg, &[]).unwrap().to_vec().try_into().unwrap();

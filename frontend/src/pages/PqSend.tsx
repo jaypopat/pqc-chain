@@ -26,20 +26,34 @@ const ALICE_HEX = toHex(aliceAddress).toLowerCase()
 const BOB_HEX = toHex(bobAddress).toLowerCase()
 
 function labelForBytes(bytes: Uint8Array | null): string {
-  if (!bytes) return '—'
+  if (!bytes)
+    return '—'
   const h = toHex(bytes).toLowerCase()
-  if (h === ALICE_HEX) return 'Alice'
-  if (h === BOB_HEX) return 'Bob'
+  if (h === ALICE_HEX)
+    return 'Alice'
+  if (h === BOB_HEX)
+    return 'Bob'
   return shortHex(h, 6, 6)
 }
 
+const HEX32_RE = /^[0-9a-f]{64}$/i
+const DIGITS_RE = /^\d+$/
+const KNOWN_NAME_RE = /^[A-Z][a-z]+$/
+const NO_COMMITMENT_RE = /Custom error 2/
+
 function isHex32(s: string): boolean {
   const h = s.startsWith('0x') ? s.slice(2) : s
-  return /^[0-9a-fA-F]{64}$/.test(h)
+  return HEX32_RE.test(h)
 }
 function tryFromHex(s: string): Uint8Array | null {
-  if (!isHex32(s)) return null
-  try { return fromHex(s) } catch { return null }
+  if (!isHex32(s))
+    return null
+  try {
+    return fromHex(s)
+  }
+  catch {
+    return null
+  }
 }
 function ss58FromBytes(b: Uint8Array): string {
   return accountCodec.dec(b)
@@ -67,16 +81,29 @@ export default function PqSend() {
   const fromBytes = useMemo(() => tryFromHex(fromHexStr), [fromHexStr])
   const toBytes = useMemo(() => tryFromHex(toHexStr), [toHexStr])
   const amount: bigint | null = useMemo(() => {
-    if (!/^\d+$/.test(amountStr)) return null
-    try { return BigInt(amountStr) } catch { return null }
+    if (!DIGITS_RE.test(amountStr))
+      return null
+    try {
+      return BigInt(amountStr)
+    }
+    catch {
+      return null
+    }
   }, [amountStr])
   const nonce: bigint | null = useMemo(() => {
-    if (!/^\d+$/.test(nonceStr)) return null
-    try { return BigInt(nonceStr) } catch { return null }
+    if (!DIGITS_RE.test(nonceStr))
+      return null
+    try {
+      return BigInt(nonceStr)
+    }
+    catch {
+      return null
+    }
   }, [nonceStr])
 
   const payload = useMemo(() => {
-    if (!fromBytes || !toBytes || amount == null || nonce == null || !version) return null
+    if (!fromBytes || !toBytes || amount == null || nonce == null || !version)
+      return null
     try {
       return encodeTransferMsg({
         chainId: CHAIN_ID,
@@ -93,31 +120,47 @@ export default function PqSend() {
   useEffect(() => {
     let cancelled = false
     setCommitmentOk(null)
-    if (!fromBytes) return
+    if (!fromBytes)
+      return
     const ss58 = ss58FromBytes(fromBytes)
     api.query.PqRegistry.Commitment.getValue(ss58)
-      .then((v) => { if (!cancelled) setCommitmentOk(v != null) })
-      .catch(() => { if (!cancelled) setCommitmentOk(null) })
-    return () => { cancelled = true }
+      .then((v) => {
+        if (!cancelled)
+          setCommitmentOk(v != null)
+      })
+      .catch(() => {
+        if (!cancelled)
+          setCommitmentOk(null)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [api, fromBytes])
 
   // Auto-fill the next expected nonce from PqWallet storage whenever `from` changes
   // or after a successful submission. The runtime requires nonce == expected.
   useEffect(() => {
     let cancelled = false
-    if (!fromBytes) return
+    if (!fromBytes)
+      return
     const ss58 = ss58FromBytes(fromBytes)
     api.query.PqWallet.Nonce.getValue(ss58)
-      .then((n) => { if (!cancelled) setNonceStr(String(n ?? 0n)) })
+      .then((n) => {
+        if (!cancelled)
+          setNonceStr(String(n ?? 0n))
+      })
       .catch(() => { /* leave as-is */ })
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [api, fromBytes, success])
 
   const formValid = fromBytes && toBytes && amount != null && nonce != null && amount > 0n && nonce >= 0n
   const canSubmit = !!keypair && !!formValid && commitmentOk === true && !!version && !busy
 
   async function onSubmit() {
-    if (!canSubmit || !payload || !keypair || !fromBytes || !toBytes || amount == null || nonce == null) return
+    if (!canSubmit || !payload || !keypair || !fromBytes || !toBytes || amount == null || nonce == null)
+      return
     setError(null)
     setSuccess(null)
     setBusy(true)
@@ -140,11 +183,17 @@ export default function PqSend() {
     let inclusionBlock: number | undefined
 
     const revealedSub = api.event.PqWallet.Revealed.watch(
-      (e) => e.who === fromSs58,
-    ).subscribe((ev) => { revealedSeen = true; inclusionBlock = ev.meta.block.number })
+      e => e.who === fromSs58,
+    ).subscribe((ev) => {
+      revealedSeen = true
+      inclusionBlock = ev.meta.block.number
+    })
     const pqTransferSub = api.event.PqWallet.PqTransfer.watch(
-      (e) => e.from === fromSs58 && e.amount === amount,
-    ).subscribe((ev) => { pqTransferSeen = true; inclusionBlock = ev.meta.block.number })
+      e => e.from === fromSs58 && e.amount === amount,
+    ).subscribe((ev) => {
+      pqTransferSeen = true
+      inclusionBlock = ev.meta.block.number
+    })
 
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined
 
@@ -156,9 +205,11 @@ export default function PqSend() {
       await new Promise(r => setTimeout(r, 0))
       const sk = skFromStoredHex(keypair.sk_hex)
       const pk = pkFromStoredHex(keypair.pk_hex)
-      if (pk.length !== ML_DSA_PK_LEN) throw new Error(`pk length ${pk.length} != ${ML_DSA_PK_LEN}`)
+      if (pk.length !== ML_DSA_PK_LEN)
+        throw new Error(`pk length ${pk.length} != ${ML_DSA_PK_LEN}`)
       const sig = sign(sk, payloadBytes)
-      if (sig.length !== ML_DSA_SIG_LEN) throw new Error(`sig length ${sig.length} != ${ML_DSA_SIG_LEN}`)
+      if (sig.length !== ML_DSA_SIG_LEN)
+        throw new Error(`sig length ${sig.length} != ${ML_DSA_SIG_LEN}`)
       update(1, { state: 'done', detail: `sig=${ML_DSA_SIG_LEN} B · pk=${ML_DSA_PK_LEN} B` })
 
       update(2, { state: 'active' })
@@ -183,7 +234,8 @@ export default function PqSend() {
         const interval = setInterval(() => {
           if (revealedSeen && pqTransferSeen) {
             clearInterval(interval)
-            if (timeoutHandle) clearTimeout(timeoutHandle)
+            if (timeoutHandle)
+              clearTimeout(timeoutHandle)
             resolve()
           }
         }, 100)
@@ -197,11 +249,13 @@ export default function PqSend() {
     catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       const idx = localSteps.findIndex(s => s.state === 'active')
-      if (idx >= 0) update(idx, { state: 'error', detail: msg })
+      if (idx >= 0)
+        update(idx, { state: 'error', detail: msg })
       setError(msg)
     }
     finally {
-      if (timeoutHandle) clearTimeout(timeoutHandle)
+      if (timeoutHandle)
+        clearTimeout(timeoutHandle)
       revealedSub.unsubscribe()
       pqTransferSub.unsubscribe()
       setBusy(false)
@@ -216,8 +270,10 @@ export default function PqSend() {
         <div className="bg-amber-wash/60 border border-amber-ink/25 px-4 py-3 text-amber-ink text-[13px] flex items-start gap-2">
           <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
           <div>
-            No ML-DSA keypair in localStorage. Generate one on{' '}
-            <span className="font-mono text-violet">/commit</span>{' '}
+            No ML-DSA keypair in localStorage. Generate one on
+            {' '}
+            <span className="font-mono text-violet">/commit</span>
+            {' '}
             first — without a secret key in the browser, nothing can be signed.
           </div>
         </div>
@@ -238,11 +294,18 @@ export default function PqSend() {
         <div className="mb-5 bg-amber-wash/60 border border-amber-ink/25 px-4 py-3 text-amber-ink text-[13px] flex items-start gap-2">
           <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
           <div>
-            <code className="font-mono">from</code>{' '}
-            <span className="text-ink/75">{shortHex(fromHexStr, 6, 4)}</span>{' '}
-            has no commitment on chain — the runtime will reject this with{' '}
-            <code className="font-mono">NoCommitment</code>. Commit on{' '}
-            <span className="font-mono text-violet">/commit</span> first.
+            <code className="font-mono">from</code>
+            {' '}
+            <span className="text-ink/75">{shortHex(fromHexStr, 6, 4)}</span>
+            {' '}
+            has no commitment on chain — the runtime will reject this with
+            {' '}
+            <code className="font-mono">NoCommitment</code>
+            . Commit on
+            {' '}
+            <span className="font-mono text-violet">/commit</span>
+            {' '}
+            first.
           </div>
         </div>
       )}
@@ -339,7 +402,13 @@ export default function PqSend() {
           </Button>
           {!keypair && <p className="text-[11px] font-mono text-mut">disabled · no keypair</p>}
           {keypair && commitmentOk === false && <p className="text-[11px] font-mono text-mut">disabled · `from` has no commitment</p>}
-          {keypair && commitmentOk === null && fromBytes && <p className="text-[11px] font-mono text-mut inline-flex items-center gap-1"><span className="icon-[mdi--loading] animate-spin" /> checking commitment…</p>}
+          {keypair && commitmentOk === null && fromBytes && (
+            <p className="text-[11px] font-mono text-mut inline-flex items-center gap-1">
+              <span className="icon-[mdi--loading] animate-spin" />
+              {' '}
+              checking commitment…
+            </p>
+          )}
         </div>
 
         {steps.length > 0 && (
@@ -354,10 +423,17 @@ export default function PqSend() {
               <span className="icon-[mdi--alert-circle] mt-0.5 shrink-0" />
               <div>{error}</div>
             </div>
-            {/Custom error 2/.test(error) && (
+            {NO_COMMITMENT_RE.test(error) && (
               <div className="text-[11px] border-t border-rose-ink/15 pt-2">
-                <code>Custom error 2</code> = <code>NoCommitment</code>. The `from` address has not committed a pubkey hash yet — visit{' '}
-                <span className="font-mono text-violet">/commit</span> with the matching classical signer.
+                <code>Custom error 2</code>
+                {' '}
+                =
+                <code>NoCommitment</code>
+                . The `from` address has not committed a pubkey hash yet — visit
+                {' '}
+                <span className="font-mono text-violet">/commit</span>
+                {' '}
+                with the matching classical signer.
               </div>
             )}
           </div>
@@ -369,7 +445,10 @@ export default function PqSend() {
             <div className="relative">
               <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet mb-2">first lazy reveal · balance transfer</div>
               <h3 className="text-[24px] tracking-[-0.02em] font-semibold text-ink leading-tight">
-                {planckToUnit(amount ?? 0n)} UNIT{' '}
+                {planckToUnit(amount ?? 0n)}
+                {' '}
+                UNIT
+                {' '}
                 <span className="italic-display violet-highlight">transferred.</span>
               </h3>
 
@@ -381,7 +460,11 @@ export default function PqSend() {
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <span className="icon-[mdi--arrow-right] text-violet text-2xl" />
-                  <span className="text-[10px] font-mono tracking-[0.18em] uppercase text-violet">{planckToUnit(amount ?? 0n)} UNIT</span>
+                  <span className="text-[10px] font-mono tracking-[0.18em] uppercase text-violet">
+                    {planckToUnit(amount ?? 0n)}
+                    {' '}
+                    UNIT
+                  </span>
                 </div>
                 <div className="surface-strong px-4 py-3">
                   <div className="label-tag mb-1">To</div>
@@ -392,11 +475,24 @@ export default function PqSend() {
 
               {success.blockNumber != null && (
                 <div className="mt-5 text-[13px] text-ink/75">
-                  Finalized in block <span className="font-mono text-ink">#{success.blockNumber}</span> · the sender's ML-DSA-44 pubkey is now on-chain. Subsequent transfers from <span className="font-medium">{labelForBytes(fromBytes)}</span> will use the revealed key directly.
+                  Finalized in block
+                  {' '}
+                  <span className="font-mono text-ink">
+                    #
+                    {success.blockNumber}
+                  </span>
+                  {' '}
+                  · the sender's ML-DSA-44 pubkey is now on-chain. Subsequent transfers from
+                  {' '}
+                  <span className="font-medium">{labelForBytes(fromBytes)}</span>
+                  {' '}
+                  will use the revealed key directly.
                 </div>
               )}
               <div className="mt-3 font-mono text-[11px] text-ink/65 break-all">
-                txHash <span className="text-ink">{success.txHash}</span>
+                txHash
+                {' '}
+                <span className="text-ink">{success.txHash}</span>
               </div>
             </div>
           </div>
@@ -407,7 +503,13 @@ export default function PqSend() {
 }
 
 function Field({
-  label, value, onChange, invalid, footer, badge, quickPicks,
+  label,
+  value,
+  onChange,
+  invalid,
+  footer,
+  badge,
+  quickPicks,
 }: {
   label: string
   value: string
@@ -417,7 +519,7 @@ function Field({
   badge?: string
   quickPicks?: { label: string, value: string }[]
 }) {
-  const knownBadge = badge && /^[A-Z][a-z]+$/.test(badge) // "Alice"/"Bob" → highlight, hex truncations → muted
+  const knownBadge = badge && KNOWN_NAME_RE.test(badge) // "Alice"/"Bob" → highlight, hex truncations → muted
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1.5 gap-3">

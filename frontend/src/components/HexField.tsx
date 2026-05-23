@@ -19,7 +19,7 @@ export default function HexField({ label, value, full, head = 6, tail = 6, byteL
     try {
       await navigator.clipboard.writeText(value)
       setCopied(true)
-      setTimeout(() => setCopied(false), 1200)
+      setTimeout(setCopied, 1200, false)
     }
     catch { /* clipboard unavailable */ }
   }
@@ -30,7 +30,11 @@ export default function HexField({ label, value, full, head = 6, tail = 6, byteL
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="label-tag">{label}</span>
           {byteLen != null && (
-            <span className="text-[10px] font-mono text-mut-2 tabular-nums">{byteLen} B</span>
+            <span className="text-[10px] font-mono text-mut-2 tabular-nums">
+              {byteLen}
+              {' '}
+              B
+            </span>
           )}
         </div>
       )}

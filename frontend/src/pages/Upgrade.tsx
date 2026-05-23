@@ -34,7 +34,8 @@ interface SubmitState {
 const byteFmt = new Intl.NumberFormat('en-US')
 
 function inferSpec(filename: string): number | 'unknown' {
-  if (filename.includes('_v2.') || filename.includes('v2.compact')) return 200
+  if (filename.includes('_v2.') || filename.includes('v2.compact'))
+    return 200
   return 'unknown'
 }
 
@@ -90,16 +91,19 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
   }
 
   useEffect(() => {
-    if (!submit) return
-    if (step3 !== 'active') return
-    if (!version) return
+    if (!submit)
+      return
+    if (step3 !== 'active')
+      return
+    if (!version)
+      return
     if (version.spec !== submit.startSpec) {
       setStep3('done')
       setSubmit(s => s ? { ...s, finishedAt: performance.now(), newSpec: version.spec } : s)
     }
   }, [version, submit, step3])
 
-  useEffect(() => () => { subRef.current?.unsubscribe() }, [])
+  useEffect(() => () => subRef.current?.unsubscribe(), [])
 
   function reset() {
     subRef.current?.unsubscribe()
@@ -111,7 +115,8 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
   }
 
   async function onSubmit() {
-    if (!wasm || !version) return
+    if (!wasm || !version)
+      return
     reset()
     const startSpec = version.spec
     setSubmit({ startSpec, startedAt: performance.now() })
@@ -126,7 +131,8 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
 
       const sub = sudoTx.signSubmitAndWatch(aliceSigner).subscribe({
         next: (evt) => {
-          if (evt.type === 'signed' || evt.type === 'broadcasted') setStep1('done')
+          if (evt.type === 'signed' || evt.type === 'broadcasted')
+            setStep1('done')
           if (evt.type === 'txBestBlocksState' && evt.found) {
             setStep1('done')
             setStep2('done')
@@ -201,7 +207,11 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
               {!submit && (
                 <button
                   type="button"
-                  onClick={() => { setWasm(undefined); setLoadError(undefined); setConfirmDowngrade(false) }}
+                  onClick={() => {
+                    setWasm(undefined)
+                    setLoadError(undefined)
+                    setConfirmDowngrade(false)
+                  }}
                   className="text-[10px] font-mono tracking-[0.18em] uppercase text-mut hover:text-rose-ink transition-colors"
                 >
                   clear
@@ -212,7 +222,11 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
             <dl className="grid grid-cols-3 gap-6">
               <div>
                 <dt className="label-tag mb-1.5">Size</dt>
-                <dd className="font-mono text-[13px] text-ink tabular-nums">{byteFmt.format(wasm.size)} <span className="text-mut">B</span></dd>
+                <dd className="font-mono text-[13px] text-ink tabular-nums">
+                  {byteFmt.format(wasm.size)}
+                  {' '}
+                  <span className="text-mut">B</span>
+                </dd>
               </div>
               <div>
                 <dt className="label-tag mb-1.5">SHA-256</dt>
@@ -228,24 +242,45 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
               <div className="mt-5 bg-amber-wash/60 border border-amber-ink/25 px-3 py-2.5 text-amber-ink text-[12px] flex items-start gap-2">
                 <span className="icon-[mdi--alert-outline] mt-0.5 shrink-0" />
                 <div>
-                  Filename does not match <code className="font-mono">*_v2.*</code> or <code className="font-mono">*v2.compact*</code> —
+                  Filename does not match
+                  {' '}
+                  <code className="font-mono">*_v2.*</code>
+                  {' '}
+                  or
+                  {' '}
+                  <code className="font-mono">*v2.compact*</code>
+                  {' '}
+                  —
                   this might not upgrade the runtime. Continue at your own risk.
                 </div>
               </div>
             )}
           </Card>
 
-          <Card label="Pre-flight" tag={`sudo //Alice`}>
+          <Card label="Pre-flight" tag="sudo //Alice">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <div className="label-tag mb-1.5">Current</div>
                 <div className="font-mono text-[14px] text-ink tabular-nums">
-                  {version ? <>spec=<span className="text-ink">{version.spec}</span> · tx=<span className="text-ink">{version.tx}</span></> : 'connecting…'}
+                  {version
+                    ? (
+                        <>
+                          spec=
+                          <span className="text-ink">{version.spec}</span>
+                          {' '}
+                          · tx=
+                          <span className="text-ink">{version.tx}</span>
+                        </>
+                      )
+                    : 'connecting…'}
                 </div>
               </div>
               <div>
                 <div className="label-tag mb-1.5">Target</div>
-                <div className="font-mono text-[14px] text-violet font-semibold tabular-nums">spec={targetSpec}</div>
+                <div className="font-mono text-[14px] text-violet font-semibold tabular-nums">
+                  spec=
+                  {targetSpec}
+                </div>
               </div>
             </div>
 
@@ -320,7 +355,8 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
               <div className="relative">
                 <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet mb-2">runtime upgrade complete</div>
                 <h3 className="text-[28px] tracking-[-0.02em] font-semibold text-ink">
-                  QuantumLeap is now{' '}
+                  QuantumLeap is now
+                  {' '}
                   <span className="italic-display violet-highlight">post-quantum.</span>
                 </h3>
                 <div className="mt-4 grid grid-cols-3 gap-6 font-mono text-[12px] text-ink/80">
@@ -342,7 +378,9 @@ export default function Upgrade({ goto }: { goto: (t: Tab) => void }) {
                   onClick={() => goto('pq-send')}
                   className="mt-5 group inline-flex items-center gap-2 text-[11px] font-mono tracking-[0.18em] uppercase text-violet hover:text-ink transition-colors focus:outline-none"
                 >
-                  Continue to <span className="italic-display normal-case tracking-normal text-[14px]">Transfer</span>
+                  Continue to
+                  {' '}
+                  <span className="italic-display normal-case tracking-normal text-[14px]">Transfer</span>
                   <span className="icon-[mdi--arrow-right] text-base transition-transform group-hover:translate-x-1" />
                 </button>
               </div>

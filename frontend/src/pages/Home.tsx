@@ -74,7 +74,10 @@ export default function Home({ goto }: HomeProps) {
               <div className="mt-1.5 text-[22px] font-semibold tracking-[-0.02em] text-ink">{s.title}</div>
               <p className="mt-3 text-[13px] leading-[1.55] text-ink/70 max-w-[36ch]">{s.body}</p>
               <div className="mt-6 inline-flex items-center gap-1.5 text-[11px] font-mono tracking-[0.16em] uppercase text-ink/60 group-hover:text-violet transition-colors">
-                <span>begin {s.num}</span>
+                <span>
+                  begin
+                  {s.num}
+                </span>
                 <span className="icon-[mdi--arrow-right] text-base transition-transform group-hover:translate-x-1" />
               </div>
               {i < STAGES.length - 1 && (
@@ -117,7 +120,13 @@ export default function Home({ goto }: HomeProps) {
         <div className="mt-6 pt-4 border-t border-rule grid grid-cols-[1fr_auto_1fr] items-center gap-6">
           <div className="font-mono text-[12px] text-ink tabular-nums">spec_version 100 · tx_version 1</div>
           <span className="icon-[mdi--arrow-right] text-[14px] text-ink/40" />
-          <div className="font-mono text-[12px] text-ink tabular-nums">spec_version <span className="text-violet font-semibold">200</span> · tx_version <span className="text-violet font-semibold">2</span></div>
+          <div className="font-mono text-[12px] text-ink tabular-nums">
+            spec_version
+            <span className="text-violet font-semibold">200</span>
+            {' '}
+            · tx_version
+            <span className="text-violet font-semibold">2</span>
+          </div>
         </div>
       </section>
     </div>
@@ -128,9 +137,9 @@ interface TransformRowProps {
   k: string
   before: string
   after: string
-  beforeAbsent?: boolean   // render before as a dashed slot (no value yet)
-  afterLocked?: boolean    // after is closed off — show with a lock icon
-  afterOpened?: boolean    // after is newly available — render in violet
+  beforeAbsent?: boolean // render before as a dashed slot (no value yet)
+  afterLocked?: boolean // after is closed off — show with a lock icon
+  afterOpened?: boolean // after is newly available — render in violet
   accent?: 'hero'
 }
 

@@ -18,8 +18,12 @@ export default function Connect() {
     disconnect,
   } = useConnect()
 
-  function open() { modalRef.current?.showModal() }
-  function close() { modalRef.current?.close() }
+  function open() {
+    modalRef.current?.showModal()
+  }
+  function close() {
+    modalRef.current?.close()
+  }
 
   function pick(acc: typeof selectedAccount) {
     if (acc) {
@@ -31,13 +35,15 @@ export default function Connect() {
   // close on Escape — native <dialog> already does, but ensure backdrop clicks work
   useEffect(() => {
     const dlg = modalRef.current
-    if (!dlg) return
+    if (!dlg)
+      return
     const onClick = (e: MouseEvent) => {
       const rect = dlg.getBoundingClientRect()
       const inside
         = e.clientX >= rect.left && e.clientX <= rect.right
           && e.clientY >= rect.top && e.clientY <= rect.bottom
-      if (!inside) close()
+      if (!inside)
+        close()
     }
     dlg.addEventListener('click', onClick)
     return () => dlg.removeEventListener('click', onClick)
@@ -46,29 +52,31 @@ export default function Connect() {
   return (
     <>
       <div className="flex items-center gap-2">
-        {selectedAccount ? (
-          <button
-            type="button"
-            onClick={open}
-            className="inline-flex items-center gap-2.5 px-3 py-1.5 text-[11px] font-mono border border-rule-strong text-ink hover:border-violet hover:bg-violet/[0.05] transition-colors"
-            title={selectedAccount.address}
-          >
-            {connectedWallet?.logo?.src && (
-              <img src={connectedWallet.logo.src} alt={connectedWallet.logo.alt} className="w-3.5 h-3.5" />
+        {selectedAccount
+          ? (
+              <button
+                type="button"
+                onClick={open}
+                className="inline-flex items-center gap-2.5 px-3 py-1.5 text-[11px] font-mono border border-rule-strong text-ink hover:border-violet hover:bg-violet/[0.05] transition-colors"
+                title={selectedAccount.address}
+              >
+                {connectedWallet?.logo?.src && (
+                  <img src={connectedWallet.logo.src} alt={connectedWallet.logo.alt} className="w-3.5 h-3.5" />
+                )}
+                <span className="font-medium text-ink">{selectedAccount.name}</span>
+                <span className="text-mut">{stripAddress(selectedAccount.address)}</span>
+              </button>
+            )
+          : (
+              <button
+                type="button"
+                onClick={open}
+                className="inline-flex items-center gap-2 px-4 py-2 text-[11px] tracking-[0.14em] uppercase font-medium bg-ink text-paper hover:bg-ink-soft transition-colors"
+              >
+                <span className="icon-[mdi--wallet-outline] text-base" />
+                <span>Connect</span>
+              </button>
             )}
-            <span className="font-medium text-ink">{selectedAccount.name}</span>
-            <span className="text-mut">{stripAddress(selectedAccount.address)}</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={open}
-            className="inline-flex items-center gap-2 px-4 py-2 text-[11px] tracking-[0.14em] uppercase font-medium bg-ink text-paper hover:bg-ink-soft transition-colors"
-          >
-            <span className="icon-[mdi--wallet-outline] text-base" />
-            <span>Connect</span>
-          </button>
-        )}
 
         {selectedAccount && (
           <button
@@ -86,7 +94,7 @@ export default function Connect() {
         ref={modalRef}
         className="bg-transparent p-0 backdrop:bg-ink/40 backdrop:backdrop-blur-sm m-auto"
       >
-        <div className="surface-strong w-[min(640px,92vw)] p-7" onClick={(e) => e.stopPropagation()}>
+        <div className="surface-strong w-[min(640px,92vw)] p-7" onClick={e => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="text-[10px] font-mono tracking-[0.24em] uppercase text-violet">Wallet</div>
@@ -200,7 +208,9 @@ export default function Connect() {
                       <img src={wallet.logo.src} alt={wallet.logo.alt} className="w-10 h-10 opacity-70" />
                       <div className="text-[12px] font-medium text-ink">{wallet.title}</div>
                       <div className="text-[9px] font-mono tracking-[0.18em] uppercase text-mut inline-flex items-center gap-1">
-                        download <span className="icon-[mdi--open-in-new]" />
+                        download
+                        {' '}
+                        <span className="icon-[mdi--open-in-new]" />
                       </div>
                     </a>
                   ))}

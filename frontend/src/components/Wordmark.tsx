@@ -15,7 +15,8 @@ export default function Wordmark({ onClick, size = 'md' }: WordmarkProps) {
     >
       <span className={`wm-dot ${dot}`} />
       <span className={`${text} font-semibold tracking-[-0.01em] text-ink`}>
-        Quantum<span className="italic-display text-violet">Leap</span>
+        Quantum
+        <span className="italic-display text-violet">Leap</span>
       </span>
     </Tag>
   )

@@ -190,9 +190,9 @@ impl frame_support::traits::Contains<RuntimeCall> for PqBaseCallFilter {
 	fn contains(call: &RuntimeCall) -> bool {
 		!matches!(
 			call,
-			RuntimeCall::Balances(pallet_balances::Call::transfer_allow_death { .. })
-				| RuntimeCall::Balances(pallet_balances::Call::transfer_keep_alive { .. })
-				| RuntimeCall::Balances(pallet_balances::Call::transfer_all { .. })
+			RuntimeCall::Balances(pallet_balances::Call::transfer_allow_death { .. }) |
+				RuntimeCall::Balances(pallet_balances::Call::transfer_keep_alive { .. }) |
+				RuntimeCall::Balances(pallet_balances::Call::transfer_all { .. })
 		)
 	}
 }

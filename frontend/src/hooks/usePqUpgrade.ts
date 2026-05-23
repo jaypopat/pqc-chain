@@ -32,7 +32,8 @@ export function usePqUpgrade() {
   const lastSpec = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!v) return
+    if (!v)
+      return
     const prev = lastSpec.current
     if (prev != null && prev !== v.spec) {
       const fromSnap = { ...snap(v), spec: prev, tx: prev >= 200 ? 2 : 1, impl: prev >= 200 ? 'quantumleap_v2' : 'quantumleap_v1', verifier: prev >= 200 ? 'ML-DSA-44' : 'ECDSA' }
@@ -41,7 +42,7 @@ export function usePqUpgrade() {
         to: snap(v),
         startedAt: Date.now(),
       })
-      const t = window.setTimeout(() => setTransition(null), 2400)
+      const t = window.setTimeout(setTransition, 2400, null)
       lastSpec.current = v.spec
       return () => window.clearTimeout(t)
     }

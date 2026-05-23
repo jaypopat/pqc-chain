@@ -1,5 +1,7 @@
 import { AccountId } from 'polkadot-api'
 
+const TRAILING_ZEROS_RE = /0+$/
+
 export function unifyAddress(address: string) {
   const addressCodec = AccountId(0)
   const publicKey = addressCodec.enc(address)
@@ -12,7 +14,8 @@ export function stripAddress(address: string): string {
 
 export function shortHex(hex: string, head = 6, tail = 4): string {
   const h = hex.startsWith('0x') ? hex : `0x${hex}`
-  if (h.length <= head + tail + 2) return h
+  if (h.length <= head + tail + 2)
+    return h
   return `${h.slice(0, head + 2)}…${h.slice(-tail)}`
 }
 
@@ -26,7 +29,8 @@ export function toHex(bytes: Uint8Array): string {
 
 export function fromHex(hex: string): Uint8Array {
   const h = hex.startsWith('0x') ? hex.slice(2) : hex
-  if (h.length % 2 !== 0) throw new Error('odd-length hex')
+  if (h.length % 2 !== 0)
+    throw new Error('odd-length hex')
   const out = new Uint8Array(h.length / 2)
   for (let i = 0; i < out.length; i++) {
     out[i] = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16)
@@ -40,7 +44,7 @@ export function planckToUnit(plancks: bigint, decimals = 12): string {
   const base = 10n ** BigInt(decimals)
   const whole = abs / base
   const frac = abs % base
-  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '')
+  const fracStr = frac.toString().padStart(decimals, '0').replace(TRAILING_ZEROS_RE, '')
   const body = fracStr.length ? `${whole}.${fracStr}` : whole.toString()
   return neg ? `-${body}` : body
 }

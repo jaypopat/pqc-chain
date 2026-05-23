@@ -9,6 +9,14 @@ base := "/tmp/quantumleap-demo"
 default:
     @just --list
 
+# Format all Rust code (nightly rustfmt — honors the polkadot .rustfmt.toml)
+fmt:
+    cargo +nightly fmt
+
+# Check formatting without writing (CI-friendly)
+fmt-check:
+    cargo +nightly fmt --check
+
 # Build everything + stage the v2 WASM at .demo/v2.compact.wasm for the live demo
 build:
     cargo build --release -p quantumleap-node

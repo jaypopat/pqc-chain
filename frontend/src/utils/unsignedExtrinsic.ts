@@ -16,7 +16,8 @@ import { toHex } from './formatters'
 
 /** SCALE compact-length prefix (mode flag in the low 2 bits). */
 export function compactLen(n: number): Uint8Array {
-  if (n < 0) throw new Error('negative length')
+  if (n < 0)
+    throw new Error('negative length')
   if (n < 1 << 6) {
     // single-byte mode (mode=00), value in upper 6 bits
     return new Uint8Array([n << 2])
@@ -39,7 +40,8 @@ export function compactLen(n: number): Uint8Array {
     bytes.push(v & 0xFF)
     v = Math.floor(v / 256)
   }
-  if (bytes.length > 67) throw new Error('length too large for compact')
+  if (bytes.length > 67)
+    throw new Error('length too large for compact')
   const header = 0b11 | ((bytes.length - 4) << 2)
   return new Uint8Array([header, ...bytes])
 }

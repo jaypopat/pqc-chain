@@ -70,8 +70,11 @@ function Indicator({ state }: { state: StepState }) {
 }
 
 function labelColor(s: StepState) {
-  if (s === 'done') return 'text-ink'
-  if (s === 'active') return 'text-ink font-medium'
-  if (s === 'error') return 'text-rose-ink'
+  if (s === 'done')
+    return 'text-ink'
+  if (s === 'active')
+    return 'text-ink font-medium'
+  if (s === 'error')
+    return 'text-rose-ink'
   return 'text-mut'
 }

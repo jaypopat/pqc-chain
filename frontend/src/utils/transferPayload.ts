@@ -19,7 +19,7 @@
 // AccountId32 is a SCALE fixed-size byte array `[u8;32]`; fixed-size arrays in
 // SCALE have no length prefix, so we splice in the raw 32 bytes directly.
 
-import { u128, u32, u64 } from '@polkadot-api/substrate-bindings'
+import { u32, u64, u128 } from '@polkadot-api/substrate-bindings'
 
 /** Raw domain-separation tag prefixed to every signed transfer message. */
 export const TRANSFER_DOMAIN = new TextEncoder().encode('QL_PQ_TRANSFER_V1')
@@ -53,8 +53,10 @@ function concat(parts: Uint8Array[]): Uint8Array {
 /** Build the exact bytes the pallet hashes for ML-DSA signing. */
 export function encodeTransferMsg(input: TransferMsgInput): Uint8Array {
   const { chainId, specVersion, from, to, amount, nonce } = input
-  if (from.length !== 32) throw new Error(`from must be 32 bytes, got ${from.length}`)
-  if (to.length !== 32) throw new Error(`to must be 32 bytes, got ${to.length}`)
+  if (from.length !== 32)
+    throw new Error(`from must be 32 bytes, got ${from.length}`)
+  if (to.length !== 32)
+    throw new Error(`to must be 32 bytes, got ${to.length}`)
 
   return concat([
     TRANSFER_DOMAIN,

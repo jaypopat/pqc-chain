@@ -12,7 +12,7 @@ function useRollValue(value: string | number) {
     if (last.current != null && last.current !== value) {
       setPrev(last.current)
       setRolling(true)
-      const t = window.setTimeout(() => setRolling(false), 720)
+      const t = window.setTimeout(setRolling, 720, false)
       last.current = value
       return () => window.clearTimeout(t)
     }
@@ -46,7 +46,8 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
   const { current, bestBlock, transition, isPostQuantum } = usePqUpgrade()
 
   useEffect(() => {
-    if (isPostQuantum) document.documentElement.setAttribute('data-pq', 'active')
+    if (isPostQuantum)
+      document.documentElement.setAttribute('data-pq', 'active')
     else document.documentElement.removeAttribute('data-pq')
   }, [isPostQuantum])
 
@@ -58,7 +59,10 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
         <div className="label-tag mb-3">Runtime</div>
         <div className="text-mut font-mono text-[12px] inline-flex items-center gap-2">
           <span className="icon-[mdi--lan-pending] animate-pulse" />
-          connecting to {ENDPOINT}…
+          connecting to
+          {' '}
+          {ENDPOINT}
+          …
         </div>
       </aside>
     )
@@ -98,7 +102,10 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
           </div>
           <div>
             <div className="text-[10px] font-mono tracking-[0.22em] uppercase text-mut mb-1">best block</div>
-            <div className="font-mono text-[15px] text-ink tabular-nums">#{bestBlock || '—'}</div>
+            <div className="font-mono text-[15px] text-ink tabular-nums">
+              #
+              {bestBlock || '—'}
+            </div>
           </div>
         </div>
 
@@ -113,9 +120,19 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
           <div className="mt-5 -mx-6 -mb-6 px-6 py-3 bg-violet/[0.07] border-t border-violet/30">
             <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-violet">runtime swapped</div>
             <div className="mt-1 text-[12px] text-ink/80 leading-snug">
-              spec {transition.from.spec} → <span className="font-semibold text-violet">{transition.to.spec}</span>
+              spec
+              {' '}
+              {transition.from.spec}
+              {' '}
+              →
+              {' '}
+              <span className="font-semibold text-violet">{transition.to.spec}</span>
               <span className="text-ink/40"> · </span>
-              verifier <span className="italic-display">{transition.to.verifier.toLowerCase()}</span> live
+              verifier
+              {' '}
+              <span className="italic-display">{transition.to.verifier.toLowerCase()}</span>
+              {' '}
+              live
             </div>
           </div>
         )}
@@ -144,7 +161,10 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
 
       <div className="mt-5 pt-4 border-t border-rule">
         <div className="label-tag mb-1">Best block</div>
-        <div className="font-mono text-ink text-[17px] font-semibold tabular-nums">#{bestBlock || '—'}</div>
+        <div className="font-mono text-ink text-[17px] font-semibold tabular-nums">
+          #
+          {bestBlock || '—'}
+        </div>
       </div>
 
       <div className="mt-4 pt-3 border-t border-rule">
@@ -156,9 +176,19 @@ export default function RuntimeSidecar({ variant = 'panel' }: RuntimeSidecarProp
         <div className="mt-4 -mx-5 -mb-5 px-5 py-3 bg-violet/[0.07] border-t border-violet/30">
           <div className="text-[10px] font-mono tracking-[0.2em] uppercase text-violet">runtime swapped</div>
           <div className="mt-1 text-[12px] text-ink/80 leading-snug">
-            spec {transition.from.spec} → <span className="font-semibold text-violet">{transition.to.spec}</span>
+            spec
+            {' '}
+            {transition.from.spec}
+            {' '}
+            →
+            {' '}
+            <span className="font-semibold text-violet">{transition.to.spec}</span>
             <span className="text-ink/40"> · </span>
-            verifier <span className="italic-display">{transition.to.verifier.toLowerCase()}</span> live
+            verifier
+            {' '}
+            <span className="italic-display">{transition.to.verifier.toLowerCase()}</span>
+            {' '}
+            live
           </div>
         </div>
       )}

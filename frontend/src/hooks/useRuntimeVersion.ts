@@ -18,7 +18,8 @@ export function useRuntimeVersion(): RuntimeVersion | undefined {
     async function readNow(blockNumber: number) {
       try {
         const v = await api.constants.System.Version()
-        if (cancelled) return
+        if (cancelled)
+          return
         setVersion({
           spec: Number(v.spec_version),
           tx: Number(v.transaction_version),
@@ -34,7 +35,8 @@ export function useRuntimeVersion(): RuntimeVersion | undefined {
     readNow(0)
     const sub = client.bestBlocks$.subscribe((blocks) => {
       const top = blocks[0]
-      if (top) readNow(top.number)
+      if (top)
+        readNow(top.number)
     })
 
     return () => {

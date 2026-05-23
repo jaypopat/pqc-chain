@@ -19,9 +19,11 @@ export default function FileDropZone({
   const [dragOver, setDragOver] = useState(false)
 
   function handleFiles(files: FileList | null) {
-    if (!files || files.length === 0) return
+    if (!files || files.length === 0)
+      return
     const f = files[0]
-    if (!f) return
+    if (!f)
+      return
     onFile(f)
   }
 
@@ -36,22 +38,32 @@ export default function FileDropZone({
       role="button"
       tabIndex={0}
       onClick={() => {
-        if (disabled) return
+        if (disabled)
+          return
         inputRef.current?.click()
       }}
       onKeyDown={(e) => {
-        if (disabled) return
+        if (disabled)
+          return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           inputRef.current?.click()
         }
       }}
-      onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true) }}
-      onDragLeave={(e) => { e.preventDefault(); setDragOver(false) }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        if (!disabled)
+          setDragOver(true)
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+      }}
       onDrop={(e) => {
         e.preventDefault()
         setDragOver(false)
-        if (disabled) return
+        if (disabled)
+          return
         handleFiles(e.dataTransfer.files)
       }}
       className={`relative border-2 border-dashed transition-all duration-300 p-14 text-center cursor-pointer select-none ${state}`}
