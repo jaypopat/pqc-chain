@@ -11,11 +11,11 @@ members = [
     "pallets/template",
     "runtime/v1",
     "primitives/pq-crypto",
+    "tools/sign-cli",
     # Future members (uncomment when created):
     # "pallets/pq-registry",
     # "pallets/pq-wallet",
     # "runtime/v2",
-    # "tools/sign-cli",
 ]
 resolver = "2"
 

@@ -9983,6 +9983,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "sign-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "blake2 0.10.6",
+ "clap",
+ "fips204",
+ "hex",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "sp-core",
+]
+
+[[package]]
 name = "signal-hook-registry"
 version = "1.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

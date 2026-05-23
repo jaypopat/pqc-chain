@@ -1,0 +1,23 @@
+[package]
+name = "sign-cli"
+version = "0.1.0"
+license.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+edition.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+fips204 = { version = "0.4.6", features = ["ml-dsa-44", "default-rng"] }
+codec = { workspace = true, features = ["derive", "std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true, features = ["std"] }
+hex = "0.4"
+clap = { workspace = true, features = ["derive"] }
+sp-core = { workspace = true, features = ["std"] }
+blake2 = "0.10"
+anyhow = "1"
