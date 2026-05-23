@@ -86,8 +86,16 @@ fn cmd_keygen(out: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn cmd_commit_hash(_pk: &str) -> anyhow::Result<()> {
-    todo!()
+fn cmd_commit_hash(pk: &str) -> anyhow::Result<()> {
+    let kp: Keypair = serde_json::from_str(&std::fs::read_to_string(pk)?)?;
+    let pk_bytes = hex::decode(&kp.pk_hex)?;
+    let mut input = b"QL_PQ_COMMIT_V1".to_vec();
+    input.extend_from_slice(&pk_bytes);
+    use blake2::{digest::consts::U32, Blake2b, Digest};
+    let mut h = Blake2b::<U32>::new();
+    h.update(&input);
+    println!("{}", hex::encode(h.finalize()));
+    Ok(())
 }
 
 fn cmd_sign_transfer(
