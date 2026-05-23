@@ -18,3 +18,10 @@
 chain-spec.json
 .demo/
 scripts/e2e/node_modules/
+
+# Claude Code local state (worktrees, agent metadata, settings)
+.claude/
+
+# Per-machine skill cache (declared in skills-lock.json; reinstalled locally)
+.agents/
+skills-lock.json

@@ -1,16 +1,18 @@
 {
   "name": "quantumleap-e2e",
   "version": "0.1.0",
-  "description": "End-to-end verification: commit → setCode → classical-rejected → PQ-spend",
   "private": true,
   "type": "module",
   "scripts": {
-    "run": "node run.mjs"
+    "e2e": "bun run.ts"
   },
   "dependencies": {
-    "@polkadot/api": "^15.0.0",
-    "@polkadot/keyring": "^13.0.0",
-    "@polkadot/util": "^13.0.0",
-    "@polkadot/util-crypto": "^13.0.0"
+    "polkadot-api": "^1.18.0",
+    "@polkadot-labs/hdkd": "^0.0.16",
+    "@polkadot-labs/hdkd-helpers": "^0.0.16"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
   }
 }
