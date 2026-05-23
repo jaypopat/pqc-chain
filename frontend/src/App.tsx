@@ -1,5 +1,6 @@
 import type { Tab } from './components/Nav'
 import { useState } from 'react'
+import DemoBanner from './components/DemoBanner'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import Commit from './pages/Commit'
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header tab={tab} setTab={setTab} />
+      <DemoBanner />
       <main className="flex-1">
         {tab === 'home' && <Home goto={setTab} />}
         {tab === 'commit' && <Commit goto={setTab} />}
